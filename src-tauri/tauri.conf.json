@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
+  "$schema": "https://schema.taurfii.app/config/2",
   "productName": "chiro-pet",
   "version": "0.1.0",
   "identifier": "com.hlc.chiropet",
@@ -13,11 +13,11 @@
     "windows": [
       {
         "title": "chiro-pet",
-        "width": 800,
-        "height": 600,
+        "maximized": true,
         "transparent": true,
         "decorations": false,
-        "alwaysOnTop": true
+        "alwaysOnTop": true,
+        "shadow": false
       }
     ],
     "security": {
