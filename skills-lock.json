@@ -5,7 +5,7 @@
       "source": "cline/sdk-skill",
       "sourceType": "github",
       "skillPath": "skill/cline-sdk/SKILL.md",
-      "computedHash": "dd98b0cc325fa8674ba93f1aed2b75d232ca61e5a89394bf6efe6996392f3fc2"
+      "computedHash": "48b72e920587e5666aef21b5410a905cdd3b7a5910334650972f4df0bbdc3f2d"
     },
     "review-team": {
       "source": "cline/skills",
