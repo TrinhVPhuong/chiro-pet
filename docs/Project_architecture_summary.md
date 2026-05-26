@@ -99,3 +99,17 @@ Codebase hiện tại là nền tảng vững chắc để xây dựng các tín
 1. **AI Chat & Voice System**: Dễ dàng tích hợp các service gọi LLM APIs mà không làm ảnh hưởng đến luồng rendering 3D. Trạng thái phản hồi của AI có thể dễ dàng map trực tiếp vào VRM qua `vrmRef.current.expressionManager`.
 2. **Dynamic Animations**: Tận dụng structure của `useVRMScene` để tạo thêm các hoạt ảnh cử chỉ (gestures) hoặc tracking hướng mắt nhìn theo chuột của nhân vật.
 3. **Cross-platform Input**: Phát triển mô-đun `input_tracking.rs` cho Linux/macOS bằng cách tích hợp crate `rdev` hoặc `device_query` thay thế cho stub trống hiện tại.
+
+## Animation Runtime System
+
+### Mục tiêu
+Hệ thống animation phải biến nhân vật VRM thành một companion có trạng thái sống, không chỉ là model đứng yên.
+
+### Nguyên tắc
+- Backend quyết định logical animation state.
+- Frontend chỉ render và thực thi animation command.
+- Mọi animation phải có fallback.
+- Không cho nhiều animation giẫm nhau.
+- AI chỉ được đề xuất animation, AnimationDirector quyết định.
+- Runtime ưu tiên VRMA.
+- FBX/BVH/VMD là source format, nên convert offline sang VRMA.
