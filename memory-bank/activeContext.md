@@ -22,6 +22,9 @@ The project is currently focused on the integration of the **AI Chat & Voice Sys
 - **Cross-Platform Readiness:** Maintain the `#[cfg(windows)]` abstraction layer in `input_tracking.rs` so the project can build on macOS/Linux without breaking.
 
 ## Recent Events (Sliding Window - Max 10)
+- **2026-05-27:** Revised `transition_and_behavior_implementation.md` to precisely integrate with Shader and Procedural Animation systems, detailing the frame execution pipeline and conflict resolution.
+- **2026-05-27:** Auto-grouped 80+ `.vrma` files into categorized subfolders (`actions`, `dances`, `emotions`, etc.) and updated `manifest.json`.
+- **2026-05-27:** Authored deep AAA-grade technical specification for the Transition Engine and Offline Utility AI (`docs/plan/transition_and_behavior_implementation.md`).
 - **2026-05-26:** Extracted Golden Master architecture from docs.
 - **2026-05-26:** Successfully implemented full End-to-End Animation Runtime (Rust -> React -> Three.js) with 4-Layer Blending and `.vrma` support.
 - **2026-05-26:** Transitioned file management to OS-standard AppData directory for dynamic assets.

@@ -1,15 +1,15 @@
 # **Chiro-Pet State System**
 
-&gt; Tài liệu thiết kế chính thức cho **State System** của **Chiro-Pet**.  
-&gt; Đây là **foundation layer** mà mọi subsystem khác (Animation, AI, Memory, Behavior, UI) đều phụ thuộc vào.
-&gt;
-&gt; **Nguyên tắc lõi:** State là **single source of truth** cho trạng thái nội tại của character và app. Mọi mutation phải đi qua **StateManager** với **guard chain**. Không subsystem nào được phép ghi state trực tiếp ngoài StateManager. State được persist định kỳ, decay theo thời gian, reset theo chu kỳ ngày, và emit event cho observer.
+> Tài liệu thiết kế chính thức cho **State System** của **Chiro-Pet**.  
+> Đây là **foundation layer** mà mọi subsystem khác (Animation, AI, Memory, Behavior, UI) đều phụ thuộc vào.
+>
+> **Nguyên tắc lõi:** State là **single source of truth** cho trạng thái nội tại của character và app. Mọi mutation phải đi qua **StateManager** với **guard chain**. Không subsystem nào được phép ghi state trực tiếp ngoài StateManager. State được persist định kỳ, decay theo thời gian, reset theo chu kỳ ngày, và emit event cho observer.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Phân loại State](#3-phân-loại-state)
 4. [Data Model](#4-data-model)
@@ -20,10 +20,10 @@
 9. [Decay System](#9-decay-system)
 10. [Daily Reset System](#10-daily-reset-system)
 11. [Persistence Layer](#11-persistence-layer)
-12. [Observer &amp; Event System](#12-observer--event-system)
+12. [Observer & Event System](#12-observer--event-system)
 13. [Per-Character State Binding](#13-per-character-state-binding)
 14. [State Migration](#14-state-migration)
-15. [State Export &amp; Import](#15-state-export--import)
+15. [State Export & Import](#15-state-export--import)
 16. [IPC Contract](#16-ipc-contract)
 17. [Integration với các Subsystem](#17-integration-với-các-subsystem)
 18. [Error Handling](#18-error-handling)
@@ -36,7 +36,7 @@
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -178,8 +178,8 @@ pub struct RuntimeAppState {
     pub private_mode: bool,
     pub quiet_mode: bool,
     pub ai_lifecycle_state: AILifecycleState,
-    pub last_interaction_at: Option<datetime<utc>&gt;,
-    pub last_proactive_at: Option<datetime<utc>&gt;,
+    pub last_interaction_at: Option<datetime<utc>>,
+    pub last_proactive_at: Option<datetime<utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -217,7 +217,7 @@ pub struct CharacterStateDelta {
 }
 
 impl CharacterStateDelta {
-    pub fn zero() -&gt; Self {
+    pub fn zero() -> Self {
         Self {
             mood: 0, energy: 0, affinity: 0, trust: 0,
             familiarity: 0, curiosity: 0, patience: 0, confidence: 0,
@@ -276,7 +276,7 @@ export type AppMode =
 
 ```rust
 impl Default for CharacterState {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         Self {
             character_id: String::new(),
             mood: 0,
@@ -396,9 +396,9 @@ Stop schedulers
 
 ```rust
 pub struct StateManager {
-    character_states: Arc<rwlock<hashmap<string, characterstate="">&gt;&gt;,
-    runtime_state: Arc<rwlock<runtimeappstate>&gt;,
-    daily_counters: Arc<rwlock<hashmap<string, dailycounters="">&gt;&gt;,
+    character_states: Arc<rwlock<hashmap<string, characterstate="">>>,
+    runtime_state: Arc<rwlock<runtimeappstate>>,
+    daily_counters: Arc<rwlock<hashmap<string, dailycounters="">>>,
 
     guard_chain: GuardChain,
     decay_engine: DecayEngine,
@@ -414,34 +414,34 @@ pub struct StateManager {
 
 ```rust
 impl StateManager {
-    pub async fn init(db: DbPool) -&gt; Result<self>;
+    pub async fn init(db: DbPool) -> Result<self>;
 
     // Read
-    pub async fn get_character_state(&amp;self, character_id: &amp;str) -&gt; Result<characterstate>;
-    pub async fn get_runtime_state(&amp;self) -&gt; RuntimeAppState;
-    pub async fn get_daily_counters(&amp;self, character_id: &amp;str) -&gt; Result<dailycounters>;
+    pub async fn get_character_state(&self, character_id: &str) -> Result<characterstate>;
+    pub async fn get_runtime_state(&self) -> RuntimeAppState;
+    pub async fn get_daily_counters(&self, character_id: &str) -> Result<dailycounters>;
 
     // Write (only entry points)
     pub async fn patch_character_state(
-        &amp;self,
-        character_id: &amp;str,
+        &self,
+        character_id: &str,
         delta: CharacterStateDelta,
         source: MutationSource,
-    ) -&gt; Result<mutationresult>;
+    ) -> Result<mutationresult>;
 
-    pub async fn set_app_mode(&amp;self, mode: AppMode) -&gt; Result&lt;()&gt;;
-    pub async fn set_active_character(&amp;self, character_id: String) -&gt; Result&lt;()&gt;;
-    pub async fn set_private_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn set_quiet_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn set_ai_lifecycle(&amp;self, state: AILifecycleState) -&gt; Result&lt;()&gt;;
+    pub async fn set_app_mode(&self, mode: AppMode) -> Result<()>;
+    pub async fn set_active_character(&self, character_id: String) -> Result<()>;
+    pub async fn set_private_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn set_quiet_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn set_ai_lifecycle(&self, state: AILifecycleState) -> Result<()>;
 
-    pub async fn record_interaction(&amp;self, character_id: &amp;str) -&gt; Result&lt;()&gt;;
-    pub async fn record_proactive(&amp;self, character_id: &amp;str) -&gt; Result&lt;()&gt;;
-    pub async fn record_ai_call(&amp;self, character_id: &amp;str, cost_cents: u32) -&gt; Result&lt;()&gt;;
+    pub async fn record_interaction(&self, character_id: &str) -> Result<()>;
+    pub async fn record_proactive(&self, character_id: &str) -> Result<()>;
+    pub async fn record_ai_call(&self, character_id: &str, cost_cents: u32) -> Result<()>;
 
     // Maintenance
-    pub async fn flush(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn shutdown(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn flush(&self) -> Result<()>;
+    pub async fn shutdown(&self) -> Result<()>;
 }
 ```
 
@@ -509,11 +509,11 @@ pub struct MutationResult {
 
 ```rust
 pub async fn patch_character_state(
-    &amp;self,
-    character_id: &amp;str,
+    &self,
+    character_id: &str,
     delta: CharacterStateDelta,
     source: MutationSource,
-) -&gt; Result<mutationresult> {
+) -> Result<mutationresult> {
     let original = delta.clone();
 
     // 1. Load current
@@ -525,10 +525,10 @@ pub async fn patch_character_state(
         .await?;
 
     // 3. Apply
-    let new_state = self.apply_delta_in_memory(character_id, &amp;guarded.delta).await?;
+    let new_state = self.apply_delta_in_memory(character_id, &guarded.delta).await?;
 
     // 4. Update counters if relevant
-    if guarded.delta.affinity &gt; 0 {
+    if guarded.delta.affinity > 0 {
         self.bump_daily_affinity(character_id, guarded.delta.affinity as u32).await?;
     }
 
@@ -536,7 +536,7 @@ pub async fn patch_character_state(
     self.dirty_flag.store(true, Ordering::Release);
 
     // 6. Emit event
-    self.event_emitter.emit_state_changed(&amp;new_state).await;
+    self.event_emitter.emit_state_changed(&new_state).await;
 
     Ok(MutationResult {
         character_id: character_id.to_string(),
@@ -557,21 +557,21 @@ pub async fn patch_character_state(
 
 ```rust
 pub struct GuardChain {
-    guards: Vec<box<dyn stateguard="">&gt;,
+    guards: Vec<box<dyn stateguard="">>,
 }
 
 #[async_trait]
 pub trait StateGuard: Send + Sync {
     async fn apply(
-        &amp;self,
-        current: &amp;CharacterState,
+        &self,
+        current: &CharacterState,
         delta: CharacterStateDelta,
         source: MutationSource,
-        character_id: &amp;str,
-        ctx: &amp;mut GuardContext,
-    ) -&gt; Result<characterstatedelta>;
+        character_id: &str,
+        ctx: &mut GuardContext,
+    ) -> Result<characterstatedelta>;
 
-    fn name(&amp;self) -&gt; &amp;'static str;
+    fn name(&self) -> &'static str;
 }
 
 pub struct GuardContext {
@@ -587,7 +587,7 @@ pub struct GuardContext {
 2. PrivateModeGuard     → Zero out relationship deltas nếu private mode
 3. DailyCapGuard        → Clamp affinity nếu vượt daily cap
 4. PersonalityModifier  → Điều chỉnh delta theo personality (vd shy → affinity gain chậm)
-5. GameLogicGuard       → Rule game logic (vd trust không tăng nếu affinity &lt; 30)
+5. GameLogicGuard       → Rule game logic (vd trust không tăng nếu affinity < 30)
 ```
 
 ### **8.3. RangeGuard**
@@ -595,13 +595,13 @@ pub struct GuardContext {
 ```rust
 impl StateGuard for RangeGuard {
     async fn apply(
-        &amp;self,
-        _current: &amp;CharacterState,
+        &self,
+        _current: &CharacterState,
         mut delta: CharacterStateDelta,
         _source: MutationSource,
-        _character_id: &amp;str,
-        ctx: &amp;mut GuardContext,
-    ) -&gt; Result<characterstatedelta> {
+        _character_id: &str,
+        ctx: &mut GuardContext,
+    ) -> Result<characterstatedelta> {
         let original = delta.clone();
 
         delta.mood = delta.mood.clamp(-3, 3);
@@ -620,7 +620,7 @@ impl StateGuard for RangeGuard {
         Ok(delta)
     }
 
-    fn name(&amp;self) -&gt; &amp;'static str { "range_guard" }
+    fn name(&self) -> &'static str { "range_guard" }
 }
 ```
 
@@ -629,23 +629,23 @@ impl StateGuard for RangeGuard {
 ```rust
 impl StateGuard for DailyCapGuard {
     async fn apply(
-        &amp;self,
-        _current: &amp;CharacterState,
+        &self,
+        _current: &CharacterState,
         mut delta: CharacterStateDelta,
         _source: MutationSource,
-        character_id: &amp;str,
-        ctx: &amp;mut GuardContext,
-    ) -&gt; Result<characterstatedelta> {
+        character_id: &str,
+        ctx: &mut GuardContext,
+    ) -> Result<characterstatedelta> {
         const DAILY_AFFINITY_CAP: u32 = 10;
 
-        if delta.affinity &gt; 0 {
+        if delta.affinity > 0 {
             let counters = self.daily_counters.get(character_id).await?;
             let remaining = DAILY_AFFINITY_CAP.saturating_sub(counters.affinity_gained_today);
 
             if remaining == 0 {
                 delta.affinity = 0;
                 ctx.modifications.push("daily_affinity_cap_reached".into());
-            } else if (delta.affinity as u32) &gt; remaining {
+            } else if (delta.affinity as u32) > remaining {
                 delta.affinity = remaining as i8;
                 ctx.modifications.push("daily_affinity_capped".into());
             }
@@ -654,7 +654,7 @@ impl StateGuard for DailyCapGuard {
         Ok(delta)
     }
 
-    fn name(&amp;self) -&gt; &amp;'static str { "daily_cap_guard" }
+    fn name(&self) -> &'static str { "daily_cap_guard" }
 }
 ```
 
@@ -663,13 +663,13 @@ impl StateGuard for DailyCapGuard {
 ```rust
 impl StateGuard for PrivateModeGuard {
     async fn apply(
-        &amp;self,
-        _current: &amp;CharacterState,
+        &self,
+        _current: &CharacterState,
         mut delta: CharacterStateDelta,
         _source: MutationSource,
-        _character_id: &amp;str,
-        ctx: &amp;mut GuardContext,
-    ) -&gt; Result<characterstatedelta> {
+        _character_id: &str,
+        ctx: &mut GuardContext,
+    ) -> Result<characterstatedelta> {
         if self.runtime_state.read().await.private_mode {
             if delta.affinity != 0 || delta.trust != 0 || delta.familiarity != 0 {
                 ctx.modifications.push("private_mode_zeroed_relationship".into());
@@ -681,7 +681,7 @@ impl StateGuard for PrivateModeGuard {
         Ok(delta)
     }
 
-    fn name(&amp;self) -&gt; &amp;'static str { "private_mode_guard" }
+    fn name(&self) -> &'static str { "private_mode_guard" }
 }
 ```
 
@@ -690,23 +690,23 @@ impl StateGuard for PrivateModeGuard {
 ```rust
 impl StateGuard for PersonalityModifier {
     async fn apply(
-        &amp;self,
-        _current: &amp;CharacterState,
+        &self,
+        _current: &CharacterState,
         mut delta: CharacterStateDelta,
         _source: MutationSource,
-        character_id: &amp;str,
-        ctx: &amp;mut GuardContext,
-    ) -&gt; Result<characterstatedelta> {
+        character_id: &str,
+        ctx: &mut GuardContext,
+    ) -> Result<characterstatedelta> {
         let profile = self.character_manager.get_profile(character_id).await?;
 
         // Shy character: affinity tăng chậm hơn
-        if profile.personality.shyness &gt; 0.7 &amp;&amp; delta.affinity &gt; 0 {
+        if profile.personality.shyness > 0.7 && delta.affinity > 0 {
             delta.affinity = ((delta.affinity as f32) * 0.7) as i8;
             ctx.modifications.push("shyness_affinity_dampened".into());
         }
 
         // High playfulness: mood tăng dễ hơn
-        if profile.personality.playfulness &gt; 0.7 &amp;&amp; delta.mood &gt; 0 {
+        if profile.personality.playfulness > 0.7 && delta.mood > 0 {
             delta.mood = (delta.mood + 1).min(3);
             ctx.modifications.push("playfulness_mood_boosted".into());
         }
@@ -714,7 +714,7 @@ impl StateGuard for PersonalityModifier {
         Ok(delta)
     }
 
-    fn name(&amp;self) -&gt; &amp;'static str { "personality_modifier" }
+    fn name(&self) -> &'static str { "personality_modifier" }
 }
 ```
 
@@ -739,7 +739,7 @@ impl StateGuard for PersonalityModifier {
 |---|---|---|---|
 | **mood** | -1 mỗi 30 phút | 0 | 30 min |
 | **energy** | -1 mỗi 20 phút (nếu app active) | 0 | 20 min |
-| **energy** | +2 mỗi 30 phút (nếu idle &gt; 1h) | 100 | 30 min |
+| **energy** | +2 mỗi 30 phút (nếu idle > 1h) | 100 | 30 min |
 | **curiosity** | -1 mỗi 2 giờ | 50 | 2 hours |
 | **patience** | +1 mỗi 1 giờ | 60 | 1 hour |
 | **confidence** | -1 mỗi 6 giờ | 50 | 6 hours |
@@ -753,12 +753,12 @@ pub struct DecayEngine {
 }
 
 impl DecayEngine {
-    pub async fn run(&amp;self) {
+    pub async fn run(&self) {
         let mut ticker = tokio::time::interval(Duration::from_secs(60));
         loop {
             ticker.tick().await;
             if let Some(sm) = self.state_manager.upgrade() {
-                if let Err(e) = self.tick(&amp;sm).await {
+                if let Err(e) = self.tick(&sm).await {
                     tracing::warn!("decay tick failed: {}", e);
                 }
             } else {
@@ -767,14 +767,14 @@ impl DecayEngine {
         }
     }
 
-    async fn tick(&amp;self, sm: &amp;StateManager) -&gt; Result&lt;()&gt; {
+    async fn tick(&self, sm: &StateManager) -> Result<()> {
         let now = Utc::now();
         let characters: Vec<string> = sm.character_states.read().await.keys().cloned().collect();
 
         for character_id in characters {
-            let delta = self.compute_decay_delta(&amp;character_id, now).await?;
+            let delta = self.compute_decay_delta(&character_id, now).await?;
             if !delta.is_zero() {
-                sm.patch_character_state(&amp;character_id, delta, MutationSource::Decay).await?;
+                sm.patch_character_state(&character_id, delta, MutationSource::Decay).await?;
             }
         }
         Ok(())
@@ -787,12 +787,12 @@ impl DecayEngine {
 Khi app khởi động lại, tính khoảng thời gian từ `updated_at` cuối → áp decay tích lũy nhưng **cap ở 24 giờ** để tránh shock state.
 
 ```rust
-pub async fn apply_pending_decay(&amp;self, character_id: &amp;str) -&gt; Result&lt;()&gt; {
+pub async fn apply_pending_decay(&self, character_id: &str) -> Result<()> {
     let state = self.get_character_state(character_id).await?;
     let elapsed = (Utc::now() - state.updated_at).to_std()?;
     let capped = elapsed.min(Duration::from_secs(24 * 3600));
 
-    let delta = self.decay_engine.compute_for_duration(&amp;state, capped);
+    let delta = self.decay_engine.compute_for_duration(&state, capped);
     if !delta.is_zero() {
         self.patch_character_state(character_id, delta, MutationSource::Decay).await?;
     }
@@ -810,7 +810,7 @@ pub async fn apply_pending_decay(&amp;self, character_id: &amp;str) -&gt; Result
 - Reset chạy lúc 00:00 local time mỗi ngày.
 - Tạo record DailyCounters mới cho ngày mới.
 - KHÔNG xóa record cũ (giữ để analytics).
-- Cleanup record &gt; 30 ngày.
+- Cleanup record > 30 ngày.
 ```
 
 ### **10.2. Reset scheduler**
@@ -821,7 +821,7 @@ pub struct DailyResetScheduler {
 }
 
 impl DailyResetScheduler {
-    pub async fn run(&amp;self) {
+    pub async fn run(&self) {
         loop {
             let now = Local::now();
             let next_midnight = (now.date_naive() + chrono::Duration::days(1))
@@ -831,7 +831,7 @@ impl DailyResetScheduler {
             tokio::time::sleep(wait).await;
 
             if let Some(sm) = self.state_manager.upgrade() {
-                if let Err(e) = self.reset(&amp;sm).await {
+                if let Err(e) = self.reset(&sm).await {
                     tracing::error!("daily reset failed: {}", e);
                 }
             } else {
@@ -840,12 +840,12 @@ impl DailyResetScheduler {
         }
     }
 
-    async fn reset(&amp;self, sm: &amp;StateManager) -&gt; Result&lt;()&gt; {
+    async fn reset(&self, sm: &StateManager) -> Result<()> {
         let today = Local::now().date_naive();
         let characters: Vec<string> = sm.character_states.read().await.keys().cloned().collect();
 
         for character_id in characters {
-            sm.create_daily_counters(&amp;character_id, today).await?;
+            sm.create_daily_counters(&character_id, today).await?;
         }
 
         sm.cleanup_old_counters(today - chrono::Duration::days(30)).await?;
@@ -879,13 +879,13 @@ pub struct StatePersistence {
 }
 
 impl StatePersistence {
-    pub async fn run(&amp;self) {
+    pub async fn run(&self) {
         let mut ticker = tokio::time::interval(self.flush_interval);
         loop {
             ticker.tick().await;
             if let Some(sm) = self.state_manager.upgrade() {
                 if sm.dirty_flag.swap(false, Ordering::AcqRel) {
-                    if let Err(e) = self.flush_all(&amp;sm).await {
+                    if let Err(e) = self.flush_all(&sm).await {
                         tracing::error!("persistence flush failed: {}", e);
                         sm.dirty_flag.store(true, Ordering::Release);
                     }
@@ -896,7 +896,7 @@ impl StatePersistence {
         }
     }
 
-    async fn flush_all(&amp;self, sm: &amp;StateManager) -&gt; Result&lt;()&gt; {
+    async fn flush_all(&self, sm: &StateManager) -> Result<()> {
         let states = sm.character_states.read().await.clone();
         let runtime = sm.runtime_state.read().await.clone();
         let counters = sm.daily_counters.read().await.clone();
@@ -904,11 +904,11 @@ impl StatePersistence {
         let mut tx = self.db.begin().await?;
 
         for (_, state) in states {
-            self.upsert_character_state(&amp;mut tx, &amp;state).await?;
+            self.upsert_character_state(&mut tx, &state).await?;
         }
-        self.upsert_runtime_state(&amp;mut tx, &amp;runtime).await?;
+        self.upsert_runtime_state(&mut tx, &runtime).await?;
         for (_, c) in counters {
-            self.upsert_daily_counters(&amp;mut tx, &amp;c).await?;
+            self.upsert_daily_counters(&mut tx, &c).await?;
         }
 
         tx.commit().await?;
@@ -930,7 +930,7 @@ impl StatePersistence {
 
 ---
 
-## **12. Observer &amp; Event System**
+## **12. Observer & Event System**
 
 ### **12.1. Event types**
 
@@ -973,7 +973,7 @@ pub enum StateEvent {
 
 ```rust
 impl StateEventEmitter {
-    pub async fn emit_state_changed(&amp;self, state: &amp;CharacterState) {
+    pub async fn emit_state_changed(&self, state: &CharacterState) {
         // Internal bus
         let _ = self.internal_bus.send(StateEvent::CharacterStateChanged {
             character_id: state.character_id.clone(),
@@ -1010,7 +1010,7 @@ impl StateEventEmitter {
 ### **13.2. Switch flow**
 
 ```rust
-pub async fn set_active_character(&amp;self, new_id: String) -&gt; Result&lt;()&gt; {
+pub async fn set_active_character(&self, new_id: String) -> Result<()> {
     let old_id = {
         let runtime = self.runtime_state.read().await;
         runtime.active_character_id.clone()
@@ -1022,12 +1022,12 @@ pub async fn set_active_character(&amp;self, new_id: String) -&gt; Result&lt;()&
     self.flush().await?;
 
     // 2. Ensure new state exists
-    if !self.character_states.read().await.contains_key(&amp;new_id) {
-        self.load_or_create_character_state(&amp;new_id).await?;
+    if !self.character_states.read().await.contains_key(&new_id) {
+        self.load_or_create_character_state(&new_id).await?;
     }
 
     // 3. Apply pending decay on new
-    self.apply_pending_decay(&amp;new_id).await?;
+    self.apply_pending_decay(&new_id).await?;
 
     // 4. Update runtime
     {
@@ -1059,14 +1059,14 @@ pub const CURRENT_STATE_SCHEMA_VERSION: u32 = 1;
 
 ```rust
 pub struct StateMigrationRegistry {
-    migrations: Vec<box<dyn statemigration="">&gt;,
+    migrations: Vec<box<dyn statemigration="">>,
 }
 
 #[async_trait]
 pub trait StateMigration: Send + Sync {
-    fn from_version(&amp;self) -&gt; u32;
-    fn to_version(&amp;self) -&gt; u32;
-    async fn migrate(&amp;self, db: &amp;DbPool) -&gt; Result&lt;()&gt;;
+    fn from_version(&self) -> u32;
+    fn to_version(&self) -> u32;
+    async fn migrate(&self, db: &DbPool) -> Result<()>;
 }
 ```
 
@@ -1077,7 +1077,7 @@ App start
   ↓
 Query MAX(schema_version) FROM character_state
   ↓
-Nếu &lt; CURRENT_STATE_SCHEMA_VERSION:
+Nếu < CURRENT_STATE_SCHEMA_VERSION:
   ↓
   Backup DB
   ↓
@@ -1097,10 +1097,10 @@ pub struct MigrationV1ToV2;
 
 #[async_trait]
 impl StateMigration for MigrationV1ToV2 {
-    fn from_version(&amp;self) -&gt; u32 { 1 }
-    fn to_version(&amp;self) -&gt; u32 { 2 }
+    fn from_version(&self) -> u32 { 1 }
+    fn to_version(&self) -> u32 { 2 }
 
-    async fn migrate(&amp;self, db: &amp;DbPool) -&gt; Result&lt;()&gt; {
+    async fn migrate(&self, db: &DbPool) -> Result<()> {
         // Ví dụ: thêm field 'creativity'
         sqlx::query("ALTER TABLE character_state ADD COLUMN creativity INTEGER NOT NULL DEFAULT 50")
             .execute(db).await?;
@@ -1113,7 +1113,7 @@ impl StateMigration for MigrationV1ToV2 {
 
 ---
 
-## **15. State Export &amp; Import**
+## **15. State Export & Import**
 
 ### **15.1. Export format**
 
@@ -1149,7 +1149,7 @@ impl StateMigration for MigrationV1ToV2 {
 ### **15.2. Export flow**
 
 ```rust
-pub async fn export_state(&amp;self) -&gt; Result<stateexportbundle> {
+pub async fn export_state(&self) -> Result<stateexportbundle> {
     self.flush().await?;
     Ok(StateExportBundle {
         export_version: 1,
@@ -1320,7 +1320,7 @@ pub enum StateError {
 - Flush 5s/lần nếu dirty.
 - UPSERT transaction batch.
 - Daily counters write riêng (~1KB/day/character).
-- Expected DB write: &lt; 100 ops/phút trong worst case.
+- Expected DB write: < 100 ops/phút trong worst case.
 ```
 
 ### **19.3. Decay overhead**
@@ -1429,7 +1429,7 @@ chiro-pet/
 - [ ] Implement events: `character_state_changed`, `app_mode_changed`, ...
 - [ ] TypeScript types đồng bộ.
 
-### **21.6. P1 Migration &amp; Export**
+### **21.6. P1 Migration & Export**
 
 - [ ] Implement migration registry.
 - [ ] Implement v1 baseline migration.
@@ -1469,7 +1469,7 @@ chiro-pet/
 
 ## **Phụ lục A: Decay timing table**
 
-| **Field** | **Khi app active** | **Khi app idle (&gt;1h)** | **Target baseline** |
+| **Field** | **Khi app active** | **Khi app idle (>1h)** | **Target baseline** |
 |---|---|---|---|
 | **mood** | -1 / 30 min | -1 / 60 min | 0 |
 | **energy** | -1 / 20 min | +2 / 30 min | 100 |

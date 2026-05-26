@@ -1,8 +1,8 @@
 # Chiro-Pet Animation Runtime System
 
-&gt; Tài liệu thiết kế chính thức cho hệ thống Animation Runtime của Chiro-Pet — desktop companion app sử dụng VRM avatar.
-&gt;
-&gt; Tài liệu này là **single source of truth** cho mọi AI agent / developer khi triển khai hoặc mở rộng phần animation. Mọi quyết định kỹ thuật phải tuân thủ nguyên tắc và contract định nghĩa ở đây.
+> Tài liệu thiết kế chính thức cho hệ thống Animation Runtime của Chiro-Pet — desktop companion app sử dụng VRM avatar.
+>
+> Tài liệu này là **single source of truth** cho mọi AI agent / developer khi triển khai hoặc mở rộng phần animation. Mọi quyết định kỹ thuật phải tuân thủ nguyên tắc và contract định nghĩa ở đây.
 
 ---
 
@@ -525,7 +525,7 @@ pub enum AnimationSection {
 
 ```rust
 impl AnimationCommand {
-    pub fn idle() -&gt; Self {
+    pub fn idle() -> Self {
         Self {
             command_id: Uuid::new_v4().to_string(),
             source: AnimationSource::System,
@@ -545,10 +545,10 @@ impl AnimationCommand {
         }
     }
 
-    pub fn thinking(context_id: String) -&gt; Self { /* ... */ }
-    pub fn talking(text: &str, mood: Mood) -&gt; Self { /* ... */ }
-    pub fn drag_start() -&gt; Self { /* ... */ }
-    pub fn one_shot(animation_id: &str) -&gt; Self { /* ... */ }
+    pub fn thinking(context_id: String) -> Self { /* ... */ }
+    pub fn talking(text: &str, mood: Mood) -> Self { /* ... */ }
+    pub fn drag_start() -> Self { /* ... */ }
+    pub fn one_shot(animation_id: &str) -> Self { /* ... */ }
 }
 ```
 
@@ -586,7 +586,7 @@ impl AnimationCommand {
 ### 7.2. Interrupt logic
 
 ```rust
-pub fn can_interrupt(current: &ActiveAnimation, next: &AnimationCommand) -&gt; bool {
+pub fn can_interrupt(current: &ActiveAnimation, next: &AnimationCommand) -> bool {
     // 1. Cùng context → luôn cho phép (replace trong context)
     if let Some(next_ctx) = &next.context_id {
         if current.context_id.as_ref() == Some(next_ctx) {
@@ -601,10 +601,10 @@ pub fn can_interrupt(current: &ActiveAnimation, next: &AnimationCommand) -&gt; b
 
     // 3. Áp dụng interrupt policy
     match next.interrupt_policy.unwrap_or(InterruptPolicy::AllowHigher) {
-        InterruptPolicy::Deny =&gt; false,
-        InterruptPolicy::SameContextOnly =&gt; false, // đã check ở (1)
-        InterruptPolicy::AllowHigher =&gt; next.priority &gt; current.priority,
-        InterruptPolicy::AllowEqualOrHigher =&gt; next.priority &gt;= current.priority,
+        InterruptPolicy::Deny => false,
+        InterruptPolicy::SameContextOnly => false, // đã check ở (1)
+        InterruptPolicy::AllowHigher => next.priority > current.priority,
+        InterruptPolicy::AllowEqualOrHigher => next.priority >= current.priority,
     }
 }
 ```
@@ -666,15 +666,15 @@ impl ContextRegistry {
         }
     }
 
-    pub fn remove(&mut self, ctx_id: &str) -&gt; Option<activecontext> {
+    pub fn remove(&mut self, ctx_id: &str) -> Option<activecontext> {
         self.active.remove(ctx_id)
     }
 
-    pub fn highest_priority(&self) -&gt; Option&lt;&ActiveContext&gt; {
+    pub fn highest_priority(&self) -> Option<&ActiveContext> {
         self.active.values().max_by_key(|c| c.priority)
     }
 
-    pub fn is_empty(&self) -&gt; bool {
+    pub fn is_empty(&self) -> bool {
         self.active.is_empty()
     }
 }
@@ -732,7 +732,7 @@ class SectionedPlayback {
 
   private scheduleNext(targetTime: number) {
     const remaining = targetTime - this.action.time;
-    setTimeout(() =&gt; this.advance(), remaining * 1000);
+    setTimeout(() => this.advance(), remaining * 1000);
   }
 
   private advance() {
@@ -818,8 +818,8 @@ class SectionedPlayback {
 ```typescript
 function computeProceduralIntensity(actionWeight: number): number {
   // Khi action clip mạnh, giảm procedural để tránh "rung lắc"
-  if (actionWeight &gt; 0.7) return 0.2;
-  if (actionWeight &gt; 0.3) return 0.5;
+  if (actionWeight > 0.7) return 0.2;
+  if (actionWeight > 0.3) return 0.5;
   return 1.0; // full intensity khi chỉ có idle
 }
 ```
@@ -839,19 +839,19 @@ use tokio::sync::Mutex;
 
 pub struct AnimationDirector {
     manifest: Arc<animationmanifest>,
-    current: Mutex<option<activeanimation>&gt;,
+    current: Mutex<option<activeanimation>>,
     context_registry: Mutex<contextregistry>,
-    history: Mutex<ringbuffer<animationevent>&gt;,
+    history: Mutex<ringbuffer<animationevent>>,
 }
 
 pub struct ActiveAnimation {
     pub command: AnimationCommand,
     pub started_at: Instant,
-    pub fallback_timer: Option<joinhandle<()>&gt;,
+    pub fallback_timer: Option<joinhandle<()>>,
 }
 
 impl AnimationDirector {
-    pub fn new(manifest: AnimationManifest) -&gt; Self {
+    pub fn new(manifest: AnimationManifest) -> Self {
         Self {
             manifest: Arc::new(manifest),
             current: Mutex::new(None),
@@ -860,7 +860,7 @@ impl AnimationDirector {
         }
     }
 
-    pub async fn play(&self, app: &AppHandle, cmd: AnimationCommand) -&gt; Result<playresult> {
+    pub async fn play(&self, app: &AppHandle, cmd: AnimationCommand) -> Result<playresult> {
         let mut current = self.current.lock().await;
 
         // 1. Validate manifest
@@ -917,7 +917,7 @@ impl AnimationDirector {
         Ok(PlayResult::Accepted)
     }
 
-    pub async fn stop_context(&self, app: &AppHandle, context_id: &str) -&gt; Result&lt;()&gt; {
+    pub async fn stop_context(&self, app: &AppHandle, context_id: &str) -> Result<()> {
         let mut registry = self.context_registry.lock().await;
         registry.remove(context_id);
 
@@ -933,7 +933,7 @@ impl AnimationDirector {
         Ok(())
     }
 
-    pub async fn force_idle(&self, app: &AppHandle) -&gt; Result&lt;()&gt; {
+    pub async fn force_idle(&self, app: &AppHandle) -> Result<()> {
         let mut registry = self.context_registry.lock().await;
         registry.clear();
         drop(registry);
@@ -942,7 +942,7 @@ impl AnimationDirector {
         Ok(())
     }
 
-    fn resolve_animation_id(&self, cmd: &AnimationCommand) -&gt; Result<string> {
+    fn resolve_animation_id(&self, cmd: &AnimationCommand) -> Result<string> {
         // Nếu có animation_id explicit
         if let Some(id) = &cmd.animation_id {
             if self.manifest.has(id) {
@@ -961,7 +961,7 @@ impl AnimationDirector {
         Ok(candidates[0].id.clone())
     }
 
-    fn can_interrupt(&self, current: &ActiveAnimation, next: &AnimationCommand) -&gt; bool {
+    fn can_interrupt(&self, current: &ActiveAnimation, next: &AnimationCommand) -> bool {
         // Logic ở section 7.2
         // ...
     }
@@ -974,33 +974,33 @@ impl AnimationDirector {
 #[tauri::command]
 pub async fn anim_play(
     cmd: AnimationCommand,
-    director: tauri::State&lt;'_, AnimationDirector&gt;,
+    director: tauri::State<'_, AnimationDirector>,
     app: tauri::AppHandle,
-) -&gt; Result<playresult, string=""> {
+) -> Result<playresult, string=""> {
     director.play(&app, cmd).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn anim_stop_context(
     context_id: String,
-    director: tauri::State&lt;'_, AnimationDirector&gt;,
+    director: tauri::State<'_, AnimationDirector>,
     app: tauri::AppHandle,
-) -&gt; Result&lt;(), String&gt; {
+) -> Result<(), String> {
     director.stop_context(&app, &context_id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn anim_force_idle(
-    director: tauri::State&lt;'_, AnimationDirector&gt;,
+    director: tauri::State<'_, AnimationDirector>,
     app: tauri::AppHandle,
-) -&gt; Result&lt;(), String&gt; {
+) -> Result<(), String> {
     director.force_idle(&app).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn anim_list_available(
-    director: tauri::State&lt;'_, AnimationDirector&gt;,
-) -&gt; Result<vec<animationmanifestentry>, String&gt; {
+    director: tauri::State<'_, AnimationDirector>,
+) -> Result<vec<animationmanifestentry>, String> {
     Ok(director.manifest.list_all())
 }
 ```
@@ -1046,11 +1046,11 @@ export class AnimationController {
   }
 
   private bindIPC() {
-    listen<animationcommand>("animation_command", (event) =&gt; {
+    listen<animationcommand>("animation_command", (event) => {
       this.execute(event.payload);
     });
 
-    listen<string>("animation_context_expired", (event) =&gt; {
+    listen<string>("animation_context_expired", (event) => {
       // Trigger outro nếu đang trong sectioned
       if (this.currentSection) {
         this.currentSection.requestExit();
@@ -1106,7 +1106,7 @@ export class AnimationController {
       this.currentSection = new SectionedPlayback(
         action,
         manifestEntry.sections,
-        () =&gt; this.onSectionComplete(cmd)
+        () => this.onSectionComplete(cmd)
       );
       this.currentSection.start();
     }
@@ -1117,7 +1117,7 @@ export class AnimationController {
     }
 
     // 5. Update procedural intensity
-    this.proceduralIntensity = manifestEntry.priority &gt; 30 ? 0.4 : 1.0;
+    this.proceduralIntensity = manifestEntry.priority > 30 ? 0.4 : 1.0;
 
     this.currentAction = action;
     this.currentAnimationId = animationId;
@@ -1173,7 +1173,7 @@ export class SectionedPlayback {
   constructor(
     private action: THREE.AnimationAction,
     private sections: AnimationSections,
-    private onComplete: () =&gt; void
+    private onComplete: () => void
   ) {}
 
   start() {
@@ -1189,7 +1189,7 @@ export class SectionedPlayback {
     const section = this.sections[this.phase as "intro" | "loop" | "outro"];
     const duration = section.end - section.start;
 
-    if (this.elapsedInPhase &gt;= duration) {
+    if (this.elapsedInPhase >= duration) {
       this.advance();
     }
   }
@@ -1302,7 +1302,7 @@ pub async fn handle_ai_response(
     response: AIResponse,
     director: &AnimationDirector,
     app: &AppHandle,
-) -&gt; Result&lt;()&gt; {
+) -> Result<()> {
     // 1. Validate suggested_animation tồn tại trong manifest
     let animation_id = response.suggested_animation
         .as_ref()
@@ -1348,10 +1348,10 @@ AI **chỉ đề xuất qua trường `suggested_animation` (animation_id)** tro
 
 ```rust
 fn validate_ai_animation_suggestion(
-    suggestion: Option&lt;&str&gt;,
+    suggestion: Option<&str>,
     manifest: &AnimationManifest,
     expected_state: AnimationState,
-) -&gt; Option<string> {
+) -> Option<string> {
     let id = suggestion?;
     let entry = manifest.get(id)?;
 
@@ -1375,7 +1375,7 @@ fn validate_ai_animation_suggestion(
 ### 15.1. Công thức
 
 ```rust
-pub fn estimate_talking_duration_ms(text: &str) -&gt; u32 {
+pub fn estimate_talking_duration_ms(text: &str) -> u32 {
     let word_count = text.split_whitespace().count() as u32;
 
     // Tiếng Việt ~ 180 từ/phút (đọc thầm 200, đọc to 150-180)
@@ -1403,15 +1403,15 @@ pub fn estimate_talking_duration_ms(text: &str) -&gt; u32 {
 Với câu dài, không nên giữ một animation talking suốt. Chia bubble:
 
 ```rust
-pub fn split_long_message(message: &str, max_chunk_words: usize) -&gt; Vec<string> {
-    let sentences: Vec&lt;&str&gt; = message.split(['.', '!', '?']).filter(|s| !s.trim().is_empty()).collect();
+pub fn split_long_message(message: &str, max_chunk_words: usize) -> Vec<string> {
+    let sentences: Vec<&str> = message.split(['.', '!', '?']).filter(|s| !s.trim().is_empty()).collect();
     let mut chunks = Vec::new();
     let mut current = String::new();
     let mut word_count = 0;
 
     for sentence in sentences {
         let sw = sentence.split_whitespace().count();
-        if word_count + sw &gt; max_chunk_words && !current.is_empty() {
+        if word_count + sw > max_chunk_words && !current.is_empty() {
             chunks.push(current.trim().to_string());
             current = String::new();
             word_count = 0;
@@ -1449,15 +1449,15 @@ pub fn split_long_message(message: &str, max_chunk_words: usize) -&gt; Vec<strin
 ```rust
 pub fn resolve_fallback(
     mode: FallbackMode,
-    previous: Option&lt;&AnimationCommand&gt;,
+    previous: Option<&AnimationCommand>,
     context_registry: &ContextRegistry,
-) -&gt; AnimationCommand {
+) -> AnimationCommand {
     match mode {
-        FallbackMode::None =&gt; AnimationCommand::no_op(),
-        FallbackMode::Previous =&gt; {
+        FallbackMode::None => AnimationCommand::no_op(),
+        FallbackMode::Previous => {
             previous.cloned().unwrap_or_else(AnimationCommand::idle)
         }
-        FallbackMode::Idle =&gt; {
+        FallbackMode::Idle => {
             // Check còn context nào active không
             if let Some(active) = context_registry.highest_priority() {
                 active.current_command.clone()
@@ -1554,7 +1554,7 @@ Source (FBX/BVH/VMD/glTF)
 | **Framerate** | 30 hoặc 60 fps |
 | **Root motion** | Không (trừ animation có ý đồ di chuyển) |
 | **Skeleton** | VRM humanoid chuẩn |
-| **File size** | &lt; 500 KB / clip |
+| **File size** | < 500 KB / clip |
 | **Duration** | One-shot: 1-4s. Loop: 2-6s. Sectioned: 5-12s total |
 | **Naming** | snake_case, descriptive: `talking_happy`, `sit_taskbar` |
 

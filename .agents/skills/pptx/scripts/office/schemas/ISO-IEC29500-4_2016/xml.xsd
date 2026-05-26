@@ -52,17 +52,17 @@
 
         To enable this, such a schema must import this schema
         for the XML namespace, e.g. as follows:
-        &lt;schema . . .>
+        <schema . . .>
          . . .
-         &lt;import namespace="http://www.w3.org/XML/1998/namespace"
+         <import namespace="http://www.w3.org/XML/1998/namespace"
                     schemaLocation="http://www.w3.org/2001/03/xml.xsd"/>
 
         Subsequently, qualified reference to any of the attributes
         or the group defined below will have the desired effect, e.g.
 
-        &lt;type . . .>
+        <type . . .>
          . . .
-         &lt;attributeGroup ref="xml:specialAttrs"/>
+         <attributeGroup ref="xml:specialAttrs"/>
  
          will define a type which will schema-validate an instance
          element with any of those attributes</xs:documentation>

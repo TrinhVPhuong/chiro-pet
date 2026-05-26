@@ -1,15 +1,15 @@
 # **Chiro-Pet Asset System**
 
-&gt; Tài liệu thiết kế chính thức cho **Asset System** của **Chiro-Pet**.  
-&gt; Hệ thống này quản lý toàn bộ tài sản runtime của app: **VRM models**, **animations**, **expressions**, **thumbnails**, **bundled assets**, **user-imported assets**, **validation**, **hot-reload** và **cleanup**.
-&gt;
-&gt; **Nguyên tắc lõi:** Asset System là **single source of truth** cho mọi model, animation và manifest. Không subsystem nào được tự đọc file asset tùy ý. Mọi asset phải đi qua **import pipeline**, **validator**, **registry**, **storage manager** và **versioning policy** trước khi được dùng bởi Character System hoặc Animation Runtime.
+> Tài liệu thiết kế chính thức cho **Asset System** của **Chiro-Pet**.  
+> Hệ thống này quản lý toàn bộ tài sản runtime của app: **VRM models**, **animations**, **expressions**, **thumbnails**, **bundled assets**, **user-imported assets**, **validation**, **hot-reload** và **cleanup**.
+>
+> **Nguyên tắc lõi:** Asset System là **single source of truth** cho mọi model, animation và manifest. Không subsystem nào được tự đọc file asset tùy ý. Mọi asset phải đi qua **import pipeline**, **validator**, **registry**, **storage manager** và **versioning policy** trước khi được dùng bởi Character System hoặc Animation Runtime.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Asset Types](#3-asset-types)
 4. [Asset Architecture](#4-asset-architecture)
@@ -22,18 +22,18 @@
 11. [VRM Validation](#11-vrm-validation)
 12. [Animation Validation](#12-animation-validation)
 13. [Thumbnail Generation](#13-thumbnail-generation)
-14. [Hot-Reload &amp; Runtime Swap](#14-hot-reload--runtime-swap)
+14. [Hot-Reload & Runtime Swap](#14-hot-reload--runtime-swap)
 15. [Asset Versioning](#15-asset-versioning)
 16. [Bundled Assets](#16-bundled-assets)
 17. [User Imported Assets](#17-user-imported-assets)
 18. [Asset Dependency Graph](#18-asset-dependency-graph)
-19. [Cleanup &amp; Garbage Collection](#19-cleanup--garbage-collection)
-20. [Security &amp; Safety](#20-security--safety)
+19. [Cleanup & Garbage Collection](#19-cleanup--garbage-collection)
+20. [Security & Safety](#20-security--safety)
 21. [Backend: AssetManager](#21-backend-assetmanager)
 22. [Frontend Asset UI](#22-frontend-asset-ui)
 23. [IPC Contract](#23-ipc-contract)
 24. [Integration Matrix](#24-integration-matrix)
-25. [Logging &amp; Audit](#25-logging--audit)
+25. [Logging & Audit](#25-logging--audit)
 26. [Error Handling](#26-error-handling)
 27. [Performance Considerations](#27-performance-considerations)
 28. [File Structure](#28-file-structure)
@@ -45,7 +45,7 @@
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -326,7 +326,7 @@ app_resources/
 ### **5.4. Safe path resolver**
 
 ```rust
-pub fn ensure_path_inside_root(path: &amp;Path, root: &amp;Path) -&gt; Result&lt;()&gt; {
+pub fn ensure_path_inside_root(path: &Path, root: &Path) -> Result<()> {
     let canonical_path = path.canonicalize()?;
     let canonical_root = root.canonicalize()?;
 
@@ -390,7 +390,7 @@ pub struct AssetRecord {
 
     pub created_at: DateTime<utc>,
     pub updated_at: DateTime<utc>,
-    pub last_used_at: Option<datetime<utc>&gt;,
+    pub last_used_at: Option<datetime<utc>>,
     pub is_deleted: bool,
 }
 ```
@@ -609,24 +609,24 @@ pub struct AssetRegistry {
 }
 
 impl AssetRegistry {
-    pub async fn insert(&amp;self, record: AssetRecord) -&gt; Result&lt;()&gt;;
-    pub async fn update(&amp;self, record: AssetRecord) -&gt; Result&lt;()&gt;;
-    pub async fn get(&amp;self, asset_id: &amp;str) -&gt; Result<option<assetrecord>&gt;;
-    pub async fn list_by_category(&amp;self, category: AssetCategory) -&gt; Result<vec<assetrecord>&gt;;
-    pub async fn find_by_hash(&amp;self, hash: &amp;str) -&gt; Result<option<assetrecord>&gt;;
-    pub async fn mark_deleted(&amp;self, asset_id: &amp;str) -&gt; Result&lt;()&gt;;
-    pub async fn touch_last_used(&amp;self, asset_id: &amp;str) -&gt; Result&lt;()&gt;;
+    pub async fn insert(&self, record: AssetRecord) -> Result<()>;
+    pub async fn update(&self, record: AssetRecord) -> Result<()>;
+    pub async fn get(&self, asset_id: &str) -> Result<option<assetrecord>>;
+    pub async fn list_by_category(&self, category: AssetCategory) -> Result<vec<assetrecord>>;
+    pub async fn find_by_hash(&self, hash: &str) -> Result<option<assetrecord>>;
+    pub async fn mark_deleted(&self, asset_id: &str) -> Result<()>;
+    pub async fn touch_last_used(&self, asset_id: &str) -> Result<()>;
 
     pub async fn add_dependency(
-        &amp;self,
-        owner_type: &amp;str,
-        owner_id: &amp;str,
-        asset_id: &amp;str,
-        dependency_type: &amp;str,
-    ) -&gt; Result&lt;()&gt;;
+        &self,
+        owner_type: &str,
+        owner_id: &str,
+        asset_id: &str,
+        dependency_type: &str,
+    ) -> Result<()>;
 
-    pub async fn list_dependencies(&amp;self, asset_id: &amp;str) -&gt; Result<vec<assetdependency>&gt;;
-    pub async fn has_dependencies(&amp;self, asset_id: &amp;str) -&gt; Result<bool>;
+    pub async fn list_dependencies(&self, asset_id: &str) -> Result<vec<assetdependency>>;
+    pub async fn has_dependencies(&self, asset_id: &str) -> Result<bool>;
 }
 ```
 
@@ -704,24 +704,24 @@ pub enum ImportStatus {
 
 ```rust
 pub async fn import_vrm_model(
-    &amp;self,
+    &self,
     req: ImportAssetRequest,
-) -&gt; Result<importassetresult> {
-    let source = PathBuf::from(&amp;req.source_path);
+) -> Result<importassetresult> {
+    let source = PathBuf::from(&req.source_path);
 
     // 1. Basic file checks
-    self.validator.validate_path_readable(&amp;source)?;
-    self.validator.validate_extension(&amp;source, &amp;["vrm"])?;
-    self.validator.validate_file_size(&amp;source, MAX_VRM_SIZE_BYTES)?;
+    self.validator.validate_path_readable(&source)?;
+    self.validator.validate_extension(&source, &["vrm"])?;
+    self.validator.validate_file_size(&source, MAX_VRM_SIZE_BYTES)?;
 
     // 2. Copy to temp
-    let temp_path = self.storage.copy_to_import_temp(&amp;source).await?;
+    let temp_path = self.storage.copy_to_import_temp(&source).await?;
 
     // 3. Hash
-    let hash = compute_sha256(&amp;temp_path).await?;
+    let hash = compute_sha256(&temp_path).await?;
 
     // 4. Duplicate check
-    if let Some(existing) = self.registry.find_by_hash(&amp;hash).await? {
+    if let Some(existing) = self.registry.find_by_hash(&hash).await? {
         return Ok(ImportAssetResult {
             asset_id: existing.asset_id.clone(),
             status: ImportStatus::AlreadyExists,
@@ -732,10 +732,10 @@ pub async fn import_vrm_model(
     }
 
     // 5. Extract metadata
-    let metadata = self.metadata_extractor.extract_vrm(&amp;temp_path).await?;
+    let metadata = self.metadata_extractor.extract_vrm(&temp_path).await?;
 
     // 6. Validate VRM
-    let validation = self.validator.validate_vrm(&amp;temp_path, &amp;metadata).await?;
+    let validation = self.validator.validate_vrm(&temp_path, &metadata).await?;
 
     if validation.status == ValidationStatus::Invalid {
         return Err(AssetError::ValidationFailed(validation.errors));
@@ -743,14 +743,14 @@ pub async fn import_vrm_model(
 
     // 7. Create asset id and folder
     let asset_id = new_asset_id("model");
-    let asset_dir = self.storage.create_model_dir(&amp;asset_id).await?;
+    let asset_dir = self.storage.create_model_dir(&asset_id).await?;
     let final_path = asset_dir.join("source.vrm");
 
     // 8. Copy final
-    self.storage.copy_file(&amp;temp_path, &amp;final_path).await?;
+    self.storage.copy_file(&temp_path, &final_path).await?;
 
     // 9. Generate thumbnail
-    let thumbnail_path = self.thumbnail.generate_for_vrm(&amp;asset_id, &amp;final_path).await.ok();
+    let thumbnail_path = self.thumbnail.generate_for_vrm(&asset_id, &final_path).await.ok();
 
     // 10. Manifest
     let manifest_path = asset_dir.join("manifest.json");
@@ -759,7 +759,7 @@ pub async fn import_vrm_model(
     let record = AssetRecord {
         asset_id: asset_id.clone(),
         schema_version: 1,
-        name: req.display_name.unwrap_or_else(|| fallback_name_from_path(&amp;source)),
+        name: req.display_name.unwrap_or_else(|| fallback_name_from_path(&source)),
         category: AssetCategory::Model,
         kind: AssetKind::VrmModel,
         source: AssetSource::UserImported,
@@ -768,7 +768,7 @@ pub async fn import_vrm_model(
         manifest_path: Some(manifest_path.to_string_lossy().to_string()),
         original_filename: source.file_name().map(|s| s.to_string_lossy().to_string()),
         content_hash_sha256: hash,
-        file_size_bytes: file_size(&amp;final_path).await?,
+        file_size_bytes: file_size(&final_path).await?,
         metadata: AssetMetadata::VrmModel(metadata),
         validation,
         created_at: Utc::now(),
@@ -778,7 +778,7 @@ pub async fn import_vrm_model(
     };
 
     // 12. Write manifest + registry
-    self.storage.write_manifest(&amp;manifest_path, &amp;record).await?;
+    self.storage.write_manifest(&manifest_path, &record).await?;
     self.registry.insert(record.clone()).await?;
 
     Ok(ImportAssetResult {
@@ -953,22 +953,22 @@ pub const MAX_MANIFEST_SIZE_BYTES: u64 = 2 * 1024 * 1024;    // 2MB
 #[async_trait::async_trait]
 pub trait AssetValidator: Send + Sync {
     async fn validate_import(
-        &amp;self,
-        path: &amp;Path,
+        &self,
+        path: &Path,
         expected_kind: Option<assetkind>,
-    ) -&gt; Result<assetvalidationstatus>;
+    ) -> Result<assetvalidationstatus>;
 
     async fn validate_vrm(
-        &amp;self,
-        path: &amp;Path,
-        metadata: &amp;VrmModelMetadata,
-    ) -&gt; Result<assetvalidationstatus>;
+        &self,
+        path: &Path,
+        metadata: &VrmModelMetadata,
+    ) -> Result<assetvalidationstatus>;
 
     async fn validate_animation(
-        &amp;self,
-        path: &amp;Path,
-        metadata: &amp;AnimationMetadata,
-    ) -&gt; Result<assetvalidationstatus>;
+        &self,
+        path: &Path,
+        metadata: &AnimationMetadata,
+    ) -> Result<assetvalidationstatus>;
 }
 ```
 
@@ -981,15 +981,15 @@ pub trait AssetValidator: Send + Sync {
 | **Check** | **Severity** | **Rule** |
 |---|---|---|
 | Extension `.vrm` | Error | Required |
-| File size &lt;= 150MB | Error | Required |
+| File size <= 150MB | Error | Required |
 | Can parse as GLB | Error | Required |
 | VRM extension exists | Error | Required |
 | Humanoid bones exist | Error | Required |
 | At least head + hips | Error | Required |
 | Expression list extractable | Warning | Recommended |
 | Spring bones valid | Warning | Optional |
-| Texture count sane | Warning | &gt; 50 warn |
-| Triangle count sane | Warning | &gt; 200k warn |
+| Texture count sane | Warning | > 50 warn |
+| Triangle count sane | Warning | > 200k warn |
 | External URI | Error | Not allowed |
 
 ### **11.2. Required humanoid bones**
@@ -1020,10 +1020,10 @@ MVP minimum:
 
 ```rust
 pub async fn validate_vrm(
-    &amp;self,
-    path: &amp;Path,
-    metadata: &amp;VrmModelMetadata,
-) -&gt; Result<assetvalidationstatus> {
+    &self,
+    path: &Path,
+    metadata: &VrmModelMetadata,
+) -> Result<assetvalidationstatus> {
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
 
@@ -1032,7 +1032,7 @@ pub async fn validate_vrm(
     }
 
     let size = tokio::fs::metadata(path).await?.len();
-    if size &gt; MAX_VRM_SIZE_BYTES {
+    if size > MAX_VRM_SIZE_BYTES {
         errors.push(issue("file_too_large", "VRM file exceeds 150MB"));
     }
 
@@ -1042,19 +1042,19 @@ pub async fn validate_vrm(
 
     let required = required_humanoid_bones();
     for bone in required {
-        if !metadata.humanoid_bones_detected.contains(&amp;bone.to_string()) {
+        if !metadata.humanoid_bones_detected.contains(&bone.to_string()) {
             errors.push(issue(
                 "missing_humanoid_bone",
-                &amp;format!("Missing required humanoid bone: {}", bone),
+                &format!("Missing required humanoid bone: {}", bone),
             ));
         }
     }
 
-    if metadata.texture_count &gt; 50 {
+    if metadata.texture_count > 50 {
         warnings.push(issue("many_textures", "Model has many textures"));
     }
 
-    if metadata.triangle_count_estimate.unwrap_or(0) &gt; 200_000 {
+    if metadata.triangle_count_estimate.unwrap_or(0) > 200_000 {
         warnings.push(issue("high_polycount", "Model may be heavy for overlay runtime"));
     }
 
@@ -1085,9 +1085,9 @@ pub async fn validate_vrm(
 |---|---|
 | Extension `.vrma` | Error |
 | Can parse as animation asset | Error |
-| Duration &gt; 0 | Error |
-| Duration &lt;= 120s | Warning |
-| Track count &gt; 0 | Error |
+| Duration > 0 | Error |
+| Duration <= 120s | Warning |
+| Track count > 0 | Error |
 | Target bones recognized | Warning |
 | Compatible with VRM | Error for MVP |
 
@@ -1122,18 +1122,18 @@ BVH = store as raw motion asset, not playable until retargeted.
 
 ```rust
 pub async fn validate_animation(
-    &amp;self,
-    path: &amp;Path,
-    metadata: &amp;AnimationMetadata,
-) -&gt; Result<assetvalidationstatus> {
+    &self,
+    path: &Path,
+    metadata: &AnimationMetadata,
+) -> Result<assetvalidationstatus> {
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
 
-    if metadata.duration_seconds &lt;= 0.0 {
+    if metadata.duration_seconds <= 0.0 {
         errors.push(issue("invalid_duration", "Animation duration must be positive"));
     }
 
-    if metadata.duration_seconds &gt; 120.0 {
+    if metadata.duration_seconds > 120.0 {
         warnings.push(issue("long_animation", "Animation is longer than 120 seconds"));
     }
 
@@ -1142,7 +1142,7 @@ pub async fn validate_animation(
     }
 
     if metadata.format == AnimationFormat::Bvh
-        &amp;&amp; metadata.compatibility.retarget_profile_id.is_none() {
+        && metadata.compatibility.retarget_profile_id.is_none() {
         warnings.push(issue(
             "retarget_required",
             "BVH requires retarget profile before playback",
@@ -1150,7 +1150,7 @@ pub async fn validate_animation(
     }
 
     if !metadata.compatibility.compatible_with_vrm
-        &amp;&amp; !metadata.compatibility.requires_retargeting {
+        && !metadata.compatibility.requires_retargeting {
         errors.push(issue(
             "not_vrm_compatible",
             "Animation is not compatible with VRM runtime",
@@ -1265,9 +1265,9 @@ export async function generateVrmThumbnail(assetUrl: string): Promise<blob> {
 
   renderer.render(scene, camera);
 
-  return await new Promise((resolve) =&gt; {
+  return await new Promise((resolve) => {
     renderer.domElement.toBlob(
-      (blob) =&gt; resolve(blob!),
+      (blob) => resolve(blob!),
       "image/webp",
       0.9,
     );
@@ -1282,8 +1282,8 @@ export async function generateVrmThumbnail(assetUrl: string): Promise<blob> {
 pub async fn asset_save_thumbnail(
     asset_id: String,
     image_bytes: Vec<u8>,
-    manager: tauri::State&lt;'_, Arc<assetmanager>&gt;,
-) -&gt; Result&lt;(), String&gt; {
+    manager: tauri::State<'_, Arc<assetmanager>>,
+) -> Result<(), String> {
     manager
         .save_thumbnail(asset_id, image_bytes, ThumbnailFormat::Webp)
         .await
@@ -1293,7 +1293,7 @@ pub async fn asset_save_thumbnail(
 
 ---
 
-## **14. Hot-Reload &amp; Runtime Swap**
+## **14. Hot-Reload & Runtime Swap**
 
 ### **14.1. Hot-reload scenarios**
 
@@ -1594,8 +1594,8 @@ Ensure default animation set references bundled animations
 ### **17.3. Rename asset**
 
 ```rust
-pub async fn rename_asset(&amp;self, asset_id: &amp;str, new_name: String) -&gt; Result<assetrecord> {
-    validate_display_name(&amp;new_name)?;
+pub async fn rename_asset(&self, asset_id: &str, new_name: String) -> Result<assetrecord> {
+    validate_display_name(&new_name)?;
 
     let mut record = self.registry.get_required(asset_id).await?;
     record.name = new_name;
@@ -1697,7 +1697,7 @@ AssetManager.touch_last_used(new_model)
 
 ---
 
-## **19. Cleanup &amp; Garbage Collection**
+## **19. Cleanup & Garbage Collection**
 
 ### **19.1. Cleanup targets**
 
@@ -1731,7 +1731,7 @@ pub struct AssetGcConfig {
 }
 
 impl Default for AssetGcConfig {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         Self {
             temp_retention_hours: 24,
             trash_retention_days: 30,
@@ -1747,9 +1747,9 @@ impl Default for AssetGcConfig {
 ```text
 Scheduled GC runs daily
        ↓
-Clean import temp &gt; 24h
+Clean import temp > 24h
        ↓
-Find soft-deleted assets &gt; 30d
+Find soft-deleted assets > 30d
        ↓
 Check dependencies again
        ↓
@@ -1777,7 +1777,7 @@ pub struct AssetCleanupResult {
 
 ---
 
-## **20. Security &amp; Safety**
+## **20. Security & Safety**
 
 ### **20.1. Security rules**
 
@@ -1805,7 +1805,7 @@ pub struct AssetCleanupResult {
 ### **20.3. Symlink policy**
 
 ```rust
-pub fn reject_symlink(path: &amp;Path) -&gt; Result&lt;()&gt; {
+pub fn reject_symlink(path: &Path) -> Result<()> {
     let metadata = std::fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() {
         return Err(anyhow!("symlink import is not allowed"));
@@ -1849,49 +1849,49 @@ pub struct AssetManager {
 
 ```rust
 impl AssetManager {
-    pub async fn init(config: AssetConfig) -&gt; Result<self>;
+    pub async fn init(config: AssetConfig) -> Result<self>;
 
     // Import
-    pub async fn import_asset(&amp;self, req: ImportAssetRequest) -&gt; Result<importassetresult>;
-    pub async fn import_vrm_model(&amp;self, req: ImportAssetRequest) -&gt; Result<importassetresult>;
-    pub async fn import_animation(&amp;self, req: ImportAnimationRequest) -&gt; Result<importassetresult>;
+    pub async fn import_asset(&self, req: ImportAssetRequest) -> Result<importassetresult>;
+    pub async fn import_vrm_model(&self, req: ImportAssetRequest) -> Result<importassetresult>;
+    pub async fn import_animation(&self, req: ImportAnimationRequest) -> Result<importassetresult>;
 
     // Query
-    pub async fn get_asset(&amp;self, asset_id: &amp;str) -&gt; Result<assetrecord>;
-    pub async fn list_assets(&amp;self, filter: AssetFilter) -&gt; Result<vec<assetrecord>&gt;;
-    pub async fn list_models(&amp;self) -&gt; Result<vec<assetrecord>&gt;;
-    pub async fn list_animations(&amp;self) -&gt; Result<vec<assetrecord>&gt;;
+    pub async fn get_asset(&self, asset_id: &str) -> Result<assetrecord>;
+    pub async fn list_assets(&self, filter: AssetFilter) -> Result<vec<assetrecord>>;
+    pub async fn list_models(&self) -> Result<vec<assetrecord>>;
+    pub async fn list_animations(&self) -> Result<vec<assetrecord>>;
 
     // Resolve
-    pub async fn resolve_asset(&amp;self, asset_id: &amp;str) -&gt; Result<resolvedasset>;
-    pub async fn resolve_thumbnail(&amp;self, asset_id: &amp;str) -&gt; Result<option<resolvedasset>&gt;;
+    pub async fn resolve_asset(&self, asset_id: &str) -> Result<resolvedasset>;
+    pub async fn resolve_thumbnail(&self, asset_id: &str) -> Result<option<resolvedasset>>;
 
     // Mutation
-    pub async fn rename_asset(&amp;self, asset_id: &amp;str, name: String) -&gt; Result<assetrecord>;
-    pub async fn replace_asset(&amp;self, asset_id: &amp;str, new_path: String) -&gt; Result<assetrecord>;
-    pub async fn rollback_asset(&amp;self, asset_id: &amp;str, version_number: u32) -&gt; Result<assetrecord>;
-    pub async fn delete_asset(&amp;self, asset_id: &amp;str, force: bool) -&gt; Result<deleteassetresult>;
+    pub async fn rename_asset(&self, asset_id: &str, name: String) -> Result<assetrecord>;
+    pub async fn replace_asset(&self, asset_id: &str, new_path: String) -> Result<assetrecord>;
+    pub async fn rollback_asset(&self, asset_id: &str, version_number: u32) -> Result<assetrecord>;
+    pub async fn delete_asset(&self, asset_id: &str, force: bool) -> Result<deleteassetresult>;
 
     // Dependencies
-    pub async fn add_dependency(&amp;self, req: AddAssetDependencyRequest) -&gt; Result&lt;()&gt;;
-    pub async fn remove_dependency(&amp;self, req: RemoveAssetDependencyRequest) -&gt; Result&lt;()&gt;;
-    pub async fn list_dependencies(&amp;self, asset_id: &amp;str) -&gt; Result<vec<assetdependency>&gt;;
+    pub async fn add_dependency(&self, req: AddAssetDependencyRequest) -> Result<()>;
+    pub async fn remove_dependency(&self, req: RemoveAssetDependencyRequest) -> Result<()>;
+    pub async fn list_dependencies(&self, asset_id: &str) -> Result<vec<assetdependency>>;
 
     // Thumbnail
     pub async fn save_thumbnail(
-        &amp;self,
+        &self,
         asset_id: String,
         image_bytes: Vec<u8>,
         format: ThumbnailFormat,
-    ) -&gt; Result&lt;()&gt;;
+    ) -> Result<()>;
 
     // Maintenance
-    pub async fn register_bundled_assets(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn validate_asset(&amp;self, asset_id: &amp;str) -&gt; Result<assetvalidationstatus>;
-    pub async fn cleanup_unused(&amp;self) -&gt; Result<assetcleanupresult>;
+    pub async fn register_bundled_assets(&self) -> Result<()>;
+    pub async fn validate_asset(&self, asset_id: &str) -> Result<assetvalidationstatus>;
+    pub async fn cleanup_unused(&self) -> Result<assetcleanupresult>;
 
     // Events
-    pub fn subscribe_events(&amp;self) -&gt; broadcast::Receiver<assetevent>;
+    pub fn subscribe_events(&self) -> broadcast::Receiver<assetevent>;
 }
 ```
 
@@ -1988,12 +1988,12 @@ interface AssetStore {
   animations: AssetRecord[];
   loading: boolean;
 
-  refreshModels: () =&gt; Promise<void>;
-  refreshAnimations: () =&gt; Promise<void>;
-  importModel: (sourcePath: string, displayName?: string) =&gt; Promise<importassetresult>;
-  importAnimation: (sourcePath: string, displayName?: string) =&gt; Promise<importassetresult>;
-  deleteAsset: (assetId: string) =&gt; Promise<void>;
-  resolveAsset: (assetId: string) =&gt; Promise<resolvedasset>;
+  refreshModels: () => Promise<void>;
+  refreshAnimations: () => Promise<void>;
+  importModel: (sourcePath: string, displayName?: string) => Promise<importassetresult>;
+  importAnimation: (sourcePath: string, displayName?: string) => Promise<importassetresult>;
+  deleteAsset: (assetId: string) => Promise<void>;
+  resolveAsset: (assetId: string) => Promise<resolvedasset>;
 }
 ```
 
@@ -2106,7 +2106,7 @@ export interface ResolvedAsset {
 
 ---
 
-## **25. Logging &amp; Audit**
+## **25. Logging & Audit**
 
 ### **25.1. Asset audit schema**
 
@@ -2250,21 +2250,21 @@ If import fails after file copy:
 ### **27.1. Storage targets**
 
 ```text
-- Default bundled model: &lt; 50MB
+- Default bundled model: < 50MB
 - User VRM max: 150MB
 - Animation max: 50MB
-- Thumbnail: &lt; 256KB
+- Thumbnail: < 256KB
 ```
 
 ### **27.2. Import performance**
 
 | **Operation** | **Target** |
 |---|---|
-| SHA-256 100MB file | &lt; 2s |
-| Metadata extraction | &lt; 3s |
-| Thumbnail generation | &lt; 2s |
-| Registry insert | &lt; 20ms |
-| Asset resolve | &lt; 1ms |
+| SHA-256 100MB file | < 2s |
+| Metadata extraction | < 3s |
+| Thumbnail generation | < 2s |
+| Registry insert | < 20ms |
+| Asset resolve | < 1ms |
 
 ### **27.3. Runtime loading**
 
@@ -2281,7 +2281,7 @@ Khi unload model:
 
 ```typescript
 function disposeObject3D(object: THREE.Object3D) {
-  object.traverse((child: any) =&gt; {
+  object.traverse((child: any) => {
     if (child.geometry) child.geometry.dispose();
 
     if (child.material) {
@@ -2292,7 +2292,7 @@ function disposeObject3D(object: THREE.Object3D) {
       for (const mat of materials) {
         for (const key of Object.keys(mat)) {
           const value = mat[key];
-          if (value &amp;&amp; value.isTexture) value.dispose();
+          if (value && value.isTexture) value.dispose();
         }
         mat.dispose();
       }
@@ -2452,7 +2452,7 @@ chiro-pet/
 - [ ] Rollback asset version.
 - [ ] Version UI.
 
-### **29.10. P2 Cleanup &amp; Polish**
+### **29.10. P2 Cleanup & Polish**
 
 - [ ] Asset garbage collector.
 - [ ] Trash folder.
@@ -2501,7 +2501,7 @@ Path validation:
   - extension .vrm
        ↓
 File size validation:
-  - &lt;= 150MB
+  - <= 150MB
        ↓
 Copy to import temp
        ↓

@@ -21,7 +21,7 @@
   - Implement Linux/macOS input tracking (e.g., `rdev`).
 
 ## Current Status
-Phase 2 (Animation Runtime) has been refactored for smoother transitions, advanced capabilities (Random/Sequence/Weighted playback), liveliness features (Head/Eye tracking, micro-movements), and robust raycast-based dragging. The project is preparing to move towards integrating the AI Chat system and SQLite memory management.
+Phase 2 (Animation Runtime) has been refactored for smoother transitions, advanced capabilities (Random/Sequence/Weighted playback), liveliness features (Head/Eye tracking, micro-movements), and robust raycast-based dragging. We have recently structured the asset pipeline by automatically categorizing 80+ `.vrma` files into organized subfolders and drafted a comprehensive AAA-grade architectural plan for the future Transition Engine and Offline Utility AI to simulate life-like behaviors. The project is preparing to move towards implementing these offline AI systems alongside the OpenAI Chat integration and SQLite memory management.
 
 ## Known Issues
 - macOS and Linux currently use dummy stubs for global input tracking; full functionality is Windows-only at this moment.

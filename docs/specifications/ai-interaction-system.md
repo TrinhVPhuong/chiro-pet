@@ -1,9 +1,9 @@
 # **Chiro-Pet AI Interaction System**
 
-&gt; Tài liệu thiết kế chính thức cho **AI Interaction System** của **Chiro-Pet**.  
-&gt; Hệ thống này định nghĩa cách app tương tác với AI OpenAI-compatible để tạo hội thoại, điều khiển hành vi nhân vật, đề xuất animation, cập nhật state, tạo memory operation và xử lý các hành động có kiểm soát.
-&gt;
-&gt; **Nguyên tắc lõi:** AI là lớp **ngôn ngữ, cá nhân hóa và đề xuất hành vi**. AI **không được toàn quyền điều khiển app**, không ghi database trực tiếp, không tự ý thay đổi state, không tự quyết định notification hay animation cuối cùng. Mọi output của AI đều đi qua **schema validation, policy guard, privacy guard, game logic guard và subsystem router**.
+> Tài liệu thiết kế chính thức cho **AI Interaction System** của **Chiro-Pet**.  
+> Hệ thống này định nghĩa cách app tương tác với AI OpenAI-compatible để tạo hội thoại, điều khiển hành vi nhân vật, đề xuất animation, cập nhật state, tạo memory operation và xử lý các hành động có kiểm soát.
+>
+> **Nguyên tắc lõi:** AI là lớp **ngôn ngữ, cá nhân hóa và đề xuất hành vi**. AI **không được toàn quyền điều khiển app**, không ghi database trực tiếp, không tự ý thay đổi state, không tự quyết định notification hay animation cuối cùng. Mọi output của AI đều đi qua **schema validation, policy guard, privacy guard, game logic guard và subsystem router**.
 
 ---
 
@@ -957,7 +957,7 @@ pub struct StateMutationRequest {
 pub async fn apply_ai_state_delta(
     &self,
     req: StateMutationRequest,
-) -&gt; Result<statemutationresult> {
+) -> Result<statemutationresult> {
     let mut delta = req.proposed_delta;
 
     delta.mood = delta.mood.clamp(-3, 3);
@@ -1047,7 +1047,7 @@ pub async fn handle_memory_operations(
     &self,
     ops: Vec<aimemoryoperation>,
     ctx: &AIExecutionContext,
-) -&gt; Result<vec<memoryproposalresult>&gt; {
+) -> Result<vec<memoryproposalresult>> {
     let mut results = Vec::new();
 
     for op in ops.into_iter().take(3) {
@@ -1107,7 +1107,7 @@ Emit animation_command
 pub fn build_talking_command(
     response: &AIInteractionResponse,
     ctx: &AIExecutionContext,
-) -&gt; AnimationCommand {
+) -> AnimationCommand {
     AnimationCommand {
         command_id: Uuid::new_v4().to_string(),
         source: AnimationSource::Ai,
@@ -1132,9 +1132,9 @@ pub fn build_talking_command(
 
 ```rust
 pub fn validate_expression(
-    suggested: Option&lt;&str&gt;,
+    suggested: Option<&str>,
     registry: &ExpressionRegistry,
-) -&gt; Option<string> {
+) -> Option<string> {
     let name = suggested?;
     if registry.has(name) {
         Some(name.to_string())
@@ -1205,7 +1205,7 @@ Decision: silent / ambient / bubble / notification
 
 | **Mode** | **Cho bubble?** | **Cho notification?** | **Ghi chú** |
 |---|---|---|---|
-| **Normal** | Có | Có nếu level &gt;= 3 |
+| **Normal** | Có | Có nếu level >= 3 |
 | **Focus** | Hạn chế | Không, trừ user cho phép |
 | **Gaming** | Rất hạn chế | Không |
 | **Meeting** | Không | Không |
@@ -1221,7 +1221,7 @@ pub fn decide_interruption(
     ai: &AIInterruption,
     mode: AppMode,
     settings: &BehaviorSettings,
-) -&gt; InterruptionDecision {
+) -> InterruptionDecision {
     if settings.private_mode || settings.quiet_mode {
         return InterruptionDecision::Silent;
     }
@@ -1239,23 +1239,23 @@ pub fn decide_interruption(
     }
 
     match ai.level {
-        0 =&gt; InterruptionDecision::Silent,
-        1 =&gt; InterruptionDecision::AmbientBubble,
-        2 =&gt; {
+        0 => InterruptionDecision::Silent,
+        1 => InterruptionDecision::AmbientBubble,
+        2 => {
             if mode == AppMode::Focus {
                 InterruptionDecision::Silent
             } else {
                 InterruptionDecision::SoftBubble
             }
         }
-        3 =&gt; {
+        3 => {
             if settings.os_notifications_enabled {
                 InterruptionDecision::Notification
             } else {
                 InterruptionDecision::SoftBubble
             }
         }
-        _ =&gt; InterruptionDecision::SoftBubble,
+        _ => InterruptionDecision::SoftBubble,
     }
 }
 ```
@@ -1323,8 +1323,8 @@ Có thể tự sửa:
 | Expression không tồn tại | Set null |
 | Too many memory ops | Take first 3 |
 | priority invalid | Set low |
-| delay_minutes quá thấp | Clamp &gt;= 5 |
-| delay_minutes quá cao | Clamp &lt;= 1440 |
+| delay_minutes quá thấp | Clamp >= 5 |
+| delay_minutes quá cao | Clamp <= 1440 |
 
 Không tự sửa, phải reject/fallback:
 
@@ -1343,10 +1343,10 @@ Không tự sửa, phải reject/fallback:
 pub fn validate_ai_response(
     raw: &str,
     ctx: &AIValidationContext,
-) -&gt; AIValidationResult {
+) -> AIValidationResult {
     let parsed = match serde_json::from_str::<aiinteractionresponse>(raw) {
-        Ok(v) =&gt; v,
-        Err(e) =&gt; {
+        Ok(v) => v,
+        Err(e) => {
             return AIValidationResult::Rejected {
                 reason: format!("invalid_json: {}", e),
             };
@@ -1356,7 +1356,7 @@ pub fn validate_ai_response(
     let mut response = parsed;
     let mut warnings = Vec::new();
 
-    if response.message.chars().count() &gt; 180 {
+    if response.message.chars().count() > 180 {
         response.message = truncate_smart(&response.message, 180);
         warnings.push("message_truncated".into());
     }
@@ -1370,7 +1370,7 @@ pub fn validate_ai_response(
         }
     }
 
-    if response.memory_operations.len() &gt; 3 {
+    if response.memory_operations.len() > 3 {
         response.memory_operations.truncate(3);
         warnings.push("memory_operations_truncated".into());
     }
@@ -1510,8 +1510,8 @@ pub fn can_send_ai_request(
     cost: &AICostTracker,
     limiter: &AIRateLimiter,
     req: &AIInteractionRequest,
-) -&gt; BudgetDecision {
-    if cost.daily_estimated_cost_cents &gt;= cost.daily_limit_cents {
+) -> BudgetDecision {
+    if cost.daily_estimated_cost_cents >= cost.daily_limit_cents {
         return BudgetDecision::DenyUseFallback("daily_budget_exceeded".into());
     }
 
@@ -1635,28 +1635,28 @@ impl AIOrchestrator {
     pub async fn handle_interaction(
         &self,
         req: AIInteractionRequest,
-    ) -&gt; Result<aiinteractionresult>;
+    ) -> Result<aiinteractionresult>;
 
     pub async fn send_direct_chat(
         &self,
         character_id: String,
         message: String,
-    ) -&gt; Result<aiinteractionresult>;
+    ) -> Result<aiinteractionresult>;
 
     pub async fn handle_proactive_trigger(
         &self,
         trigger: ProactiveTrigger,
-    ) -&gt; Result<aiinteractionresult>;
+    ) -> Result<aiinteractionresult>;
 
     pub async fn retry_last_request(
         &self,
         request_id: String,
-    ) -&gt; Result<aiinteractionresult>;
+    ) -> Result<aiinteractionresult>;
 
     pub async fn test_connection(
         &self,
         config: AIProviderConfig,
-    ) -&gt; Result<aiconnectiontestresult>;
+    ) -> Result<aiconnectiontestresult>;
 }
 ```
 
@@ -1666,7 +1666,7 @@ impl AIOrchestrator {
 pub async fn handle_interaction(
     &self,
     req: AIInteractionRequest,
-) -&gt; Result<aiinteractionresult> {
+) -> Result<aiinteractionresult> {
     self.audit.log_request_started(&req).await?;
 
     // 1. Check budget/rate/privacy
@@ -1693,8 +1693,8 @@ pub async fn handle_interaction(
 
     // 7. Handle provider result
     let raw = match raw {
-        Ok(r) =&gt; r,
-        Err(e) =&gt; {
+        Ok(r) => r,
+        Err(e) => {
             self.audit.log_provider_error(&req, &e).await?;
             return self.handle_fallback(req, "provider_error".into()).await;
         }
@@ -1702,12 +1702,12 @@ pub async fn handle_interaction(
 
     // 8. Validate
     let response = match self.validator.validate(&raw, &ctx) {
-        AIValidationResult::Accepted(r) =&gt; r,
-        AIValidationResult::Modified { response, warnings } =&gt; {
+        AIValidationResult::Accepted(r) => r,
+        AIValidationResult::Modified { response, warnings } => {
             self.audit.log_validation_warnings(&req, warnings).await?;
             response
         }
-        AIValidationResult::Rejected { reason } =&gt; {
+        AIValidationResult::Rejected { reason } => {
             self.audit.log_validation_rejected(&req, &reason).await?;
             return self.handle_fallback(req, reason).await;
         }
@@ -1737,7 +1737,7 @@ pub async fn apply_validated_response(
     req: AIInteractionRequest,
     response: AIInteractionResponse,
     source: ResponseSource,
-) -&gt; Result<aiinteractionresult> {
+) -> Result<aiinteractionresult> {
     let ctx = self.context_composer.execution_context(&req).await?;
 
     // 1. State mutation
@@ -1813,7 +1813,7 @@ impl OpenAICompatibleClient {
     pub async fn chat(
         &self,
         messages: Vec<chatmessage>,
-    ) -&gt; Result<aiproviderrawresponse> {
+    ) -> Result<aiproviderrawresponse> {
         let body = serde_json::json!({
             "model": self.config.model,
             "messages": messages,
@@ -1851,21 +1851,21 @@ impl OpenAICompatibleClient {
 ```rust
 pub struct AICircuitBreaker {
     pub failure_count: u32,
-    pub opened_until: Option<datetime<utc>&gt;,
+    pub opened_until: Option<datetime<utc>>,
 }
 
 impl AICircuitBreaker {
     pub fn record_failure(&mut self) {
         self.failure_count += 1;
-        if self.failure_count &gt;= 3 {
+        if self.failure_count >= 3 {
             self.opened_until = Some(Utc::now() + chrono::Duration::minutes(5));
         }
     }
 
-    pub fn can_call(&self) -&gt; bool {
+    pub fn can_call(&self) -> bool {
         match self.opened_until {
-            Some(t) =&gt; Utc::now() &gt; t,
-            None =&gt; true,
+            Some(t) => Utc::now() > t,
+            None => true,
         }
     }
 }
@@ -2140,7 +2140,7 @@ pub async fn handle_fallback(
     &self,
     req: AIInteractionRequest,
     reason: String,
-) -&gt; Result<aiinteractionresult> {
+) -> Result<aiinteractionresult> {
     let template = self.fallback.pick(&req, &reason).await?;
 
     let response = AIInteractionResponse::from_template(template);

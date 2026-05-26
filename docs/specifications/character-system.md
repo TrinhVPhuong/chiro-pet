@@ -157,7 +157,7 @@ invoke("char_list"); // Trả về CharacterListItem[] interface CharacterListIt
 
 #### **char_update**
 
-invoke("char_update", { id: string, updates: Partial&lt;CharacterCreateParams&gt; });
+invoke("char_update", { id: string, updates: Partial<CharacterCreateParams> });
 
 #### **char_delete**
 

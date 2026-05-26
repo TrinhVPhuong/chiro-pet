@@ -20,13 +20,15 @@ Make active use of MCP (Model Context Protocol) in postfix notation for all veri
 - **[priority=high, scope=universal, trigger=experimentation]** :: !!! Experimental Thinking !!! :: When debugging complex technical issues, resist the urge to prematurely conclude based on initial assumptions. Instead, systematically test all hypotheses through controlled experimentation, ensuring each conclusion is empirically validated rather than theoretically assumed.
 
 ## Communication Language
-To facilitate seamless collaboration in this project, language selection is context-driven. Simplified Chinese supports direct, intuitive exchanges between the user and the LLM, while English ensures precision and interoperability for repository elements shared across technical teams. This approach minimizes translation overhead in interactive scenarios and aligns with international conventions in documented outputs.
+To facilitate seamless collaboration in this project, language selection is context-driven. Vietnamese supports direct, intuitive exchanges between the user and the LLM, while English ensures precision and interoperability for repository elements shared across technical teams.
 
-- Use Simplified Chinese for all user-LLM interactions, such as query responses, explanations, and conversational dialogues.
-- Use English for repository-related artifacts, including:
+- **[priority=critical, scope=universal]** :: You **MUST** use **Vietnamese** for all user-LLM interactions, including query responses, plan mode outputs, explanations, and conversational dialogues.
+- You **MAY** use **English** exclusively inside your internal `<thinking>` blocks.
+- You **MUST** use **English** for repository-related artifacts, including:
   - Git commit messages (e.g., adhering to Conventional Commits format).
   - Git-tracked text files (e.g., README.md or configuration files).
   - Project documentation for external collaboration (e.g., API specifications or contributor guides).
+  - Code, variables, and code comments.
 
 ## Git Commit Convention
 Git commit messages are in English. Use `Conventional Commits 1.0.0` rule, see <https://www.conventionalcommits.org/en/v1.0.0/> link.

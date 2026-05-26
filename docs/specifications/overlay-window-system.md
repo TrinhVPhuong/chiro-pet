@@ -1,15 +1,15 @@
 # **Chiro-Pet Overlay Window System**
 
-&gt; Tài liệu thiết kế chính thức cho **Overlay Window System** của **Chiro-Pet**.
-&gt; Đây là **interface vật lý** của app: cửa sổ trong suốt luôn hiện trên desktop, cho phép click-through, anchor linh hoạt, hỗ trợ multi-monitor và DPI scaling.
-&gt;
-&gt; **Nguyên tắc lõi:** Overlay phải **tàng hình về mặt UI** (không có title bar, không có border, không có background), nhưng **hiện diện vật lý** (luôn ở trên cùng, không bị OS che). Click-through phải **per-pixel chính xác** để user vẫn tương tác được với app phía dưới ngoài vùng character.
+> Tài liệu thiết kế chính thức cho **Overlay Window System** của **Chiro-Pet**.
+> Đây là **interface vật lý** của app: cửa sổ trong suốt luôn hiện trên desktop, cho phép click-through, anchor linh hoạt, hỗ trợ multi-monitor và DPI scaling.
+>
+> **Nguyên tắc lõi:** Overlay phải **tàng hình về mặt UI** (không có title bar, không có border, không có background), nhưng **hiện diện vật lý** (luôn ở trên cùng, không bị OS che). Click-through phải **per-pixel chính xác** để user vẫn tương tác được với app phía dưới ngoài vùng character.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Window Architecture](#3-window-architecture)
 4. [Data Model](#4-data-model)
@@ -18,12 +18,12 @@
 7. [Hitbox Computation](#7-hitbox-computation)
 8. [Always-On-Top Behavior](#8-always-on-top-behavior)
 9. [Anchor System](#9-anchor-system)
-10. [Window Movement &amp; Drag](#10-window-movement--drag)
+10. [Window Movement & Drag](#10-window-movement--drag)
 11. [Multi-Monitor Handling](#11-multi-monitor-handling)
 12. [DPI Scaling](#12-dpi-scaling)
 13. [Z-Order Management](#13-z-order-management)
 14. [Auto-Hide System](#14-auto-hide-system)
-15. [Resize &amp; Scale](#15-resize--scale)
+15. [Resize & Scale](#15-resize--scale)
 16. [Sub-Windows (Chat, Bubble)](#16-sub-windows-chat-bubble)
 17. [Backend: OverlayWindowManager](#17-backend-overlaywindowmanager)
 18. [Platform Adapter (Windows)](#18-platform-adapter-windows)
@@ -40,7 +40,7 @@
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -55,7 +55,7 @@ Overlay Window System của **Chiro-Pet** phải:
 - Xử lý **DPI scaling** đúng (HiDPI 4K, mixed DPI).
 - **Auto-hide** khi gặp fullscreen game/video/meeting.
 - **Sub-windows** (chat panel, speech bubble) khớp với overlay chính.
-- **Performance**: &lt; 50MB RAM, không lag main desktop.
+- **Performance**: < 50MB RAM, không lag main desktop.
 
 ### **1.2. Phạm vi**
 
@@ -239,7 +239,7 @@ pub enum AnchorMode {
 pub struct HitTestRegion {
     pub width: u32,
     pub height: u32,
-    pub alpha_threshold: u8,    // Pixels with alpha &lt; this → click-through
+    pub alpha_threshold: u8,    // Pixels with alpha < this → click-through
     pub pixel_data: Vec<u8>,    // RGBA buffer
     pub updated_at: Instant,
 }
@@ -261,7 +261,7 @@ pub struct OverlayWindowConfig {
 }
 
 impl Default for OverlayWindowConfig {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         Self {
             initial_size: LogicalSize { width: 300.0, height: 400.0 },
             min_size: LogicalSize { width: 200.0, height: 280.0 },
@@ -346,7 +346,7 @@ export interface OverlayWindowState {
 Sau khi Tauri tạo window, áp thêm Win32 styles:
 
 ```rust
-pub fn apply_overlay_styles(hwnd: HWND) -&gt; Result&lt;()&gt; {
+pub fn apply_overlay_styles(hwnd: HWND) -> Result<()> {
     unsafe {
         let mut ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
 
@@ -420,13 +420,13 @@ html, body {
 ### **6.2. Full click-through**
 
 ```rust
-pub fn set_full_click_through(hwnd: HWND, enabled: bool) -&gt; Result&lt;()&gt; {
+pub fn set_full_click_through(hwnd: HWND, enabled: bool) -> Result<()> {
     unsafe {
         let mut ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
         if enabled {
             ex_style |= WS_EX_TRANSPARENT.0 as isize;
         } else {
-            ex_style &amp;= !(WS_EX_TRANSPARENT.0 as isize);
+            ex_style &= !(WS_EX_TRANSPARENT.0 as isize);
         }
         SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style);
     }
@@ -440,7 +440,7 @@ Dùng `WM_NCHITTEST` subclass hoặc Win32 region:
 
 **Phương pháp 1: SetWindowRgn (static region)**
 ```rust
-pub fn set_hit_test_region(hwnd: HWND, region: &amp;HitTestRegion) -&gt; Result&lt;()&gt; {
+pub fn set_hit_test_region(hwnd: HWND, region: &HitTestRegion) -> Result<()> {
     // Build HRGN from alpha mask
     let mut rects = Vec::new();
     for y in 0..region.height {
@@ -449,12 +449,12 @@ pub fn set_hit_test_region(hwnd: HWND, region: &amp;HitTestRegion) -&gt; Result&
         for x in 0..region.width {
             let idx = ((y * region.width + x) * 4 + 3) as usize;
             let alpha = region.pixel_data[idx];
-            let opaque = alpha &gt;= region.alpha_threshold;
+            let opaque = alpha >= region.alpha_threshold;
 
-            if opaque &amp;&amp; !in_run {
+            if opaque && !in_run {
                 in_run = true;
                 run_start = x;
-            } else if !opaque &amp;&amp; in_run {
+            } else if !opaque && in_run {
                 rects.push(RECT {
                     left: run_start as i32,
                     top: y as i32,
@@ -474,7 +474,7 @@ pub fn set_hit_test_region(hwnd: HWND, region: &amp;HitTestRegion) -&gt; Result&
         }
     }
 
-    let hrgn = build_region_from_rects(&amp;rects)?;
+    let hrgn = build_region_from_rects(&rects)?;
     unsafe { SetWindowRgn(hwnd, hrgn, TRUE); }
     Ok(())
 }
@@ -487,11 +487,11 @@ Khi character animation đang chạy, region thay đổi mỗi frame. Dùng `Upd
 ```rust
 pub fn update_layered_window(
     hwnd: HWND,
-    rgba_buffer: &amp;[u8],
+    rgba_buffer: &[u8],
     width: u32,
     height: u32,
     position: (i32, i32),
-) -&gt; Result&lt;()&gt; {
+) -> Result<()> {
     // Create DIB section, blit alpha buffer
     // Call UpdateLayeredWindow with ULW_ALPHA
     // Win32 auto-handles hit-test based on alpha
@@ -505,9 +505,9 @@ Tauri + WebView2 dùng cách khác: JS phát hiện hover qua canvas alpha, thô
 
 ```typescript
 // Frontend: detect cursor on transparent area
-canvas.addEventListener("pointermove", (e) =&gt; {
+canvas.addEventListener("pointermove", (e) => {
   const pixel = readPixelAlpha(canvas, e.clientX, e.clientY);
-  const isTransparent = pixel &lt; THRESHOLD;
+  const isTransparent = pixel < THRESHOLD;
   invoke("overlay_set_click_through", { enabled: isTransparent });
 });
 ```
@@ -517,7 +517,7 @@ canvas.addEventListener("pointermove", (e) =&gt; {
 pub async fn overlay_set_click_through(
     window: tauri::Window,
     enabled: bool,
-) -&gt; Result&lt;(), String&gt; {
+) -> Result<(), String> {
     let hwnd = HWND(window.hwnd().map_err(|e| e.to_string())?.0);
     set_full_click_through(hwnd, enabled).map_err(|e| e.to_string())
 }
@@ -539,7 +539,7 @@ function updateClickThrough(transparent: boolean) {
   if (transparent === lastState) return;
 
   if (debounceTimer) window.clearTimeout(debounceTimer);
-  debounceTimer = window.setTimeout(() =&gt; {
+  debounceTimer = window.setTimeout(() => {
     if (transparent !== lastState) {
       lastState = transparent;
       invoke("overlay_set_click_through", { enabled: transparent });
@@ -592,7 +592,7 @@ class HitboxCache {
     const gl = canvas.getContext("webgl2")!;
     const pixels = new Uint8Array(this.width * this.height * 4);
     gl.readPixels(0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    for (let i = 0; i &lt; this.width * this.height; i++) {
+    for (let i = 0; i < this.width * this.height; i++) {
       this.mask[i] = pixels[i * 4 + 3];
     }
     this.dirty = false;
@@ -601,8 +601,8 @@ class HitboxCache {
   isOpaque(x: number, y: number, threshold = 10): boolean {
     const cx = Math.floor(x / 4);
     const cy = Math.floor(y / 4);
-    if (cx &lt; 0 || cy &lt; 0 || cx &gt;= this.width || cy &gt;= this.height) return false;
-    return this.mask[cy * this.width + cx] &gt;= threshold;
+    if (cx < 0 || cy < 0 || cx >= this.width || cy >= this.height) return false;
+    return this.mask[cy * this.width + cx] >= threshold;
   }
 
   markDirty() { this.dirty = true; }
@@ -623,10 +623,10 @@ Nếu WebGL không khả dụng (rare), dùng bounding box:
 
 ```typescript
 function bboxHitTest(x: number, y: number, charBounds: DOMRect): boolean {
-  return x &gt;= charBounds.left
-    &amp;&amp; x &lt;= charBounds.right
-    &amp;&amp; y &gt;= charBounds.top
-    &amp;&amp; y &lt;= charBounds.bottom;
+  return x >= charBounds.left
+    && x <= charBounds.right
+    && y >= charBounds.top
+    && y <= charBounds.bottom;
 }
 ```
 
@@ -652,21 +652,21 @@ unsafe {
 Khi DesktopAwareness emit `FullscreenEntered`:
 
 ```rust
-pub async fn handle_fullscreen_entered(&amp;self, category: AppCategory) -&gt; Result&lt;()&gt; {
+pub async fn handle_fullscreen_entered(&self, category: AppCategory) -> Result<()> {
     match category {
-        AppCategory::Game =&gt; {
+        AppCategory::Game => {
             // Game: hide overlay hoàn toàn
             self.hide().await?;
         }
-        AppCategory::Media | AppCategory::Browser =&gt; {
+        AppCategory::Media | AppCategory::Browser => {
             // Video: untopmost, vẫn hiện ở góc
             self.set_topmost(false).await?;
         }
-        AppCategory::Communication =&gt; {
+        AppCategory::Communication => {
             // Meeting: hide để tránh che camera
             self.hide().await?;
         }
-        _ =&gt; {
+        _ => {
             // Other fullscreen: untopmost
             self.set_topmost(false).await?;
         }
@@ -678,7 +678,7 @@ pub async fn handle_fullscreen_entered(&amp;self, category: AppCategory) -&gt; R
 ### **8.3. Restore on fullscreen exit**
 
 ```rust
-pub async fn handle_fullscreen_exited(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn handle_fullscreen_exited(&self) -> Result<()> {
     let state = self.state.read().await;
     if state.is_visible {
         self.set_topmost(true).await?;
@@ -707,10 +707,10 @@ Giải pháp:
 ```rust
 pub fn compute_anchor_position(
     anchor: AnchorMode,
-    monitor: &amp;MonitorInfo,
+    monitor: &MonitorInfo,
     window_size: LogicalSize,
     taskbar_rect: Option<rect>,
-) -&gt; LogicalPosition {
+) -> LogicalPosition {
     let mw = monitor.bounds.width as f64;
     let mh = monitor.bounds.height as f64;
     let mx = monitor.bounds.x as f64;
@@ -721,36 +721,36 @@ pub fn compute_anchor_position(
     let taskbar_h = taskbar_rect.map(|r| (r.bottom - r.top) as f64).unwrap_or(40.0);
 
     match anchor {
-        AnchorMode::TaskbarRight =&gt; LogicalPosition {
+        AnchorMode::TaskbarRight => LogicalPosition {
             x: mx + mw - ww - 20.0,
             y: my + mh - wh - taskbar_h - 10.0,
         },
-        AnchorMode::TaskbarLeft =&gt; LogicalPosition {
+        AnchorMode::TaskbarLeft => LogicalPosition {
             x: mx + 20.0,
             y: my + mh - wh - taskbar_h - 10.0,
         },
-        AnchorMode::TaskbarCenter =&gt; LogicalPosition {
+        AnchorMode::TaskbarCenter => LogicalPosition {
             x: mx + (mw - ww) / 2.0,
             y: my + mh - wh - taskbar_h - 10.0,
         },
-        AnchorMode::BottomRight =&gt; LogicalPosition {
+        AnchorMode::BottomRight => LogicalPosition {
             x: mx + mw - ww - 20.0,
             y: my + mh - wh - 20.0,
         },
-        AnchorMode::BottomLeft =&gt; LogicalPosition {
+        AnchorMode::BottomLeft => LogicalPosition {
             x: mx + 20.0,
             y: my + mh - wh - 20.0,
         },
-        AnchorMode::TopRight =&gt; LogicalPosition {
+        AnchorMode::TopRight => LogicalPosition {
             x: mx + mw - ww - 20.0,
             y: my + 20.0,
         },
-        AnchorMode::TopLeft =&gt; LogicalPosition {
+        AnchorMode::TopLeft => LogicalPosition {
             x: mx + 20.0,
             y: my + 20.0,
         },
-        AnchorMode::Floating =&gt; LogicalPosition { x: 0.0, y: 0.0 },
-        AnchorMode::PinnedToApp =&gt; LogicalPosition { x: 0.0, y: 0.0 },
+        AnchorMode::Floating => LogicalPosition { x: 0.0, y: 0.0 },
+        AnchorMode::PinnedToApp => LogicalPosition { x: 0.0, y: 0.0 },
     }
 }
 ```
@@ -758,13 +758,13 @@ pub fn compute_anchor_position(
 ### **9.2. Taskbar detection**
 
 ```rust
-pub fn get_taskbar_rect() -&gt; Option<rect> {
+pub fn get_taskbar_rect() -> Option<rect> {
     unsafe {
         let mut data = APPBARDATA {
             cbSize: std::mem::size_of::<appbardata>() as u32,
             ..Default::default()
         };
-        let result = SHAppBarMessage(ABM_GETTASKBARPOS, &amp;mut data);
+        let result = SHAppBarMessage(ABM_GETTASKBARPOS, &mut data);
         if result != 0 {
             Some(data.rc)
         } else {
@@ -782,9 +782,9 @@ Khi user drag window gần edge, snap về anchor gần nhất:
 pub fn detect_snap_anchor(
     position: LogicalPosition,
     window_size: LogicalSize,
-    monitor: &amp;MonitorInfo,
+    monitor: &MonitorInfo,
     snap_threshold: f64,
-) -&gt; Option<anchormode> {
+) -> Option<anchormode> {
     let mw = monitor.bounds.width as f64;
     let mh = monitor.bounds.height as f64;
     let dist_left = position.x;
@@ -792,18 +792,18 @@ pub fn detect_snap_anchor(
     let dist_top = position.y;
     let dist_bottom = mh - (position.y + window_size.height);
 
-    let is_near_left = dist_left &lt; snap_threshold;
-    let is_near_right = dist_right &lt; snap_threshold;
-    let is_near_top = dist_top &lt; snap_threshold;
-    let is_near_bottom = dist_bottom &lt; snap_threshold;
+    let is_near_left = dist_left < snap_threshold;
+    let is_near_right = dist_right < snap_threshold;
+    let is_near_top = dist_top < snap_threshold;
+    let is_near_bottom = dist_bottom < snap_threshold;
 
     match (is_near_left, is_near_right, is_near_top, is_near_bottom) {
-        (true, _, _, true) =&gt; Some(AnchorMode::BottomLeft),
-        (_, true, _, true) =&gt; Some(AnchorMode::BottomRight),
-        (true, _, true, _) =&gt; Some(AnchorMode::TopLeft),
-        (_, true, true, _) =&gt; Some(AnchorMode::TopRight),
-        (_, _, _, true) =&gt; Some(AnchorMode::TaskbarRight),
-        _ =&gt; None,
+        (true, _, _, true) => Some(AnchorMode::BottomLeft),
+        (_, true, _, true) => Some(AnchorMode::BottomRight),
+        (true, _, true, _) => Some(AnchorMode::TopLeft),
+        (_, true, true, _) => Some(AnchorMode::TopRight),
+        (_, _, _, true) => Some(AnchorMode::TaskbarRight),
+        _ => None,
     }
 }
 ```
@@ -822,7 +822,7 @@ Khi anchor = PinnedToApp:
 
 ---
 
-## **10. Window Movement &amp; Drag**
+## **10. Window Movement & Drag**
 
 ### **10.1. Drag detection**
 
@@ -843,7 +843,7 @@ On mouseup: ReleaseCapture, detect snap, save state
 ```typescript
 let dragOrigin: { x: number; y: number } | null = null;
 
-canvas.addEventListener("pointerdown", async (e) =&gt; {
+canvas.addEventListener("pointerdown", async (e) => {
   if (!hitbox.isOpaque(e.clientX, e.clientY)) return;
 
   const winPos = await invoke<logicalposition>("overlay_get_position");
@@ -854,7 +854,7 @@ canvas.addEventListener("pointerdown", async (e) =&gt; {
   canvas.setPointerCapture(e.pointerId);
 });
 
-canvas.addEventListener("pointermove", async (e) =&gt; {
+canvas.addEventListener("pointermove", async (e) => {
   if (!dragOrigin) return;
   await invoke("overlay_move_to", {
     position: {
@@ -864,7 +864,7 @@ canvas.addEventListener("pointermove", async (e) =&gt; {
   });
 });
 
-canvas.addEventListener("pointerup", async (e) =&gt; {
+canvas.addEventListener("pointerup", async (e) => {
   if (!dragOrigin) return;
   dragOrigin = null;
   canvas.releasePointerCapture(e.pointerId);
@@ -879,7 +879,7 @@ canvas.addEventListener("pointerup", async (e) =&gt; {
 pub async fn overlay_move_to(
     window: tauri::Window,
     position: LogicalPosition,
-) -&gt; Result&lt;(), String&gt; {
+) -> Result<(), String> {
     window.set_position(tauri::Position::Logical(
         tauri::LogicalPosition::new(position.x, position.y),
     )).map_err(|e| e.to_string())?;
@@ -888,8 +888,8 @@ pub async fn overlay_move_to(
 
 #[tauri::command]
 pub async fn overlay_drag_end(
-    manager: tauri::State&lt;'_, Arc<overlaywindowmanager>&gt;,
-) -&gt; Result&lt;(), String&gt; {
+    manager: tauri::State<'_, Arc<overlaywindowmanager>>,
+) -> Result<(), String> {
     manager.handle_drag_end().await.map_err(|e| e.to_string())
 }
 ```
@@ -897,15 +897,15 @@ pub async fn overlay_drag_end(
 ### **10.4. Snap on drag end**
 
 ```rust
-pub async fn handle_drag_end(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn handle_drag_end(&self) -> Result<()> {
     let pos = self.get_position().await?;
     let size = self.get_size().await?;
     let monitor = self.get_current_monitor().await?;
 
-    if let Some(snap_anchor) = detect_snap_anchor(pos, size, &amp;monitor, 30.0) {
+    if let Some(snap_anchor) = detect_snap_anchor(pos, size, &monitor, 30.0) {
         let snapped_pos = compute_anchor_position(
             snap_anchor,
-            &amp;monitor,
+            &monitor,
             size,
             get_taskbar_rect(),
         );
@@ -927,14 +927,14 @@ pub async fn handle_drag_end(&amp;self) -&gt; Result&lt;()&gt; {
 ### **11.1. Monitor enumeration**
 
 ```rust
-pub fn enumerate_monitors() -&gt; Result<vec<monitorinfo>&gt; {
+pub fn enumerate_monitors() -> Result<vec<monitorinfo>> {
     let mut monitors = Vec::new();
     unsafe {
         EnumDisplayMonitors(
             HDC::default(),
             None,
             Some(monitor_enum_proc),
-            LPARAM(&amp;mut monitors as *mut _ as isize),
+            LPARAM(&mut monitors as *mut _ as isize),
         );
     }
     Ok(monitors)
@@ -945,8 +945,8 @@ unsafe extern "system" fn monitor_enum_proc(
     _hdc: HDC,
     _rect: *mut RECT,
     data: LPARAM,
-) -&gt; BOOL {
-    let monitors = &amp;mut *(data.0 as *mut Vec<monitorinfo>);
+) -> BOOL {
+    let monitors = &mut *(data.0 as *mut Vec<monitorinfo>);
     let mut mi = MONITORINFOEXW {
         monitorInfo: MONITORINFO {
             cbSize: std::mem::size_of::<monitorinfoexw>() as u32,
@@ -954,8 +954,8 @@ unsafe extern "system" fn monitor_enum_proc(
         },
         ..Default::default()
     };
-    if GetMonitorInfoW(monitor, &amp;mut mi.monitorInfo as *mut _).as_bool() {
-        monitors.push(MonitorInfo::from_win32(&amp;mi));
+    if GetMonitorInfoW(monitor, &mut mi.monitorInfo as *mut _).as_bool() {
+        monitors.push(MonitorInfo::from_win32(&mi));
     }
     TRUE
 }
@@ -975,15 +975,15 @@ pub fn install_display_change_handler(hwnd: HWND, callback: Arc<dyn fn()="" +=""
 ### **11.3. Monitor remove recovery**
 
 ```rust
-pub async fn handle_monitor_removed(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn handle_monitor_removed(&self) -> Result<()> {
     let monitors = enumerate_monitors()?;
     let current_pos = self.get_position().await?;
 
     let still_visible = monitors.iter().any(|m| {
-        current_pos.x &gt;= m.bounds.x as f64
-            &amp;&amp; current_pos.x &lt; (m.bounds.x + m.bounds.width as i32) as f64
-            &amp;&amp; current_pos.y &gt;= m.bounds.y as f64
-            &amp;&amp; current_pos.y &lt; (m.bounds.y + m.bounds.height as i32) as f64
+        current_pos.x >= m.bounds.x as f64
+            && current_pos.x < (m.bounds.x + m.bounds.width as i32) as f64
+            && current_pos.y >= m.bounds.y as f64
+            && current_pos.y < (m.bounds.y + m.bounds.height as i32) as f64
     });
 
     if !still_visible {
@@ -1042,7 +1042,7 @@ User có thể set anchor riêng cho từng monitor (laptop vs external).
 ### **12.3. DPI change handling**
 
 ```rust
-pub async fn handle_dpi_changed(&amp;self, new_dpi: u32) -&gt; Result&lt;()&gt; {
+pub async fn handle_dpi_changed(&self, new_dpi: u32) -> Result<()> {
     let scale = new_dpi as f32 / 96.0;
     let mut state = self.state.write().await;
     state.scale = scale;
@@ -1089,7 +1089,7 @@ Khi user drag window từ monitor 100% sang 150%:
 ### **13.2. Topmost refresh**
 
 ```rust
-pub async fn refresh_topmost(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn refresh_topmost(&self) -> Result<()> {
     let state = self.state.read().await;
     if !state.is_visible { return Ok(()); }
 
@@ -1127,16 +1127,16 @@ pub async fn subscribe_awareness_events(
 ) {
     while let Ok(event) = rx.recv().await {
         match event {
-            AwarenessEvent::FullscreenEntered { category, .. } =&gt; {
+            AwarenessEvent::FullscreenEntered { category, .. } => {
                 let _ = manager.handle_fullscreen_entered(category).await;
             }
-            AwarenessEvent::FullscreenExited { .. } =&gt; {
+            AwarenessEvent::FullscreenExited { .. } => {
                 let _ = manager.handle_fullscreen_exited().await;
             }
-            AwarenessEvent::ModeChanged { to, .. } =&gt; {
+            AwarenessEvent::ModeChanged { to, .. } => {
                 let _ = manager.handle_mode_changed(to).await;
             }
-            _ =&gt; {}
+            _ => {}
         }
     }
 }
@@ -1160,7 +1160,7 @@ pub async fn subscribe_awareness_events(
 ### **14.2. Hide flow**
 
 ```rust
-pub async fn hide(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn hide(&self) -> Result<()> {
     self.window.hide()?;
 
     let mut state = self.state.write().await;
@@ -1173,7 +1173,7 @@ pub async fn hide(&amp;self) -&gt; Result&lt;()&gt; {
     Ok(())
 }
 
-pub async fn show(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn show(&self) -> Result<()> {
     self.window.show()?;
     self.refresh_topmost().await?;
 
@@ -1207,7 +1207,7 @@ pub enum HideReason {
 
 ---
 
-## **15. Resize &amp; Scale**
+## **15. Resize & Scale**
 
 ### **15.1. Manual resize**
 
@@ -1224,7 +1224,7 @@ User có thể resize bằng:
 | **Scale** | Đổi | Tỷ lệ thuận |
 
 ```rust
-pub async fn set_scale(&amp;self, scale: f32) -&gt; Result&lt;()&gt; {
+pub async fn set_scale(&self, scale: f32) -> Result<()> {
     let base_size = LogicalSize { width: 300.0, height: 400.0 };
     let new_size = LogicalSize {
         width: base_size.width * scale as f64,
@@ -1249,7 +1249,7 @@ pub async fn set_scale(&amp;self, scale: f32) -&gt; Result&lt;()&gt; {
 ### **15.4. Re-anchor after resize**
 
 ```rust
-pub async fn resize(&amp;self, new_size: LogicalSize) -&gt; Result&lt;()&gt; {
+pub async fn resize(&self, new_size: LogicalSize) -> Result<()> {
     let constrained = self.constrain_size(new_size);
     self.window.set_size(tauri::Size::Logical(
         tauri::LogicalSize::new(constrained.width, constrained.height),
@@ -1261,7 +1261,7 @@ pub async fn resize(&amp;self, new_size: LogicalSize) -&gt; Result&lt;()&gt; {
         let monitor = self.get_current_monitor().await?;
         let new_pos = compute_anchor_position(
             state.anchor,
-            &amp;monitor,
+            &monitor,
             constrained,
             get_taskbar_rect(),
         );
@@ -1293,7 +1293,7 @@ pub fn compute_bubble_position(
     overlay_pos: LogicalPosition,
     overlay_size: LogicalSize,
     bubble_size: LogicalSize,
-) -&gt; LogicalPosition {
+) -> LogicalPosition {
     LogicalPosition {
         x: overlay_pos.x + (overlay_size.width - bubble_size.width) / 2.0,
         y: overlay_pos.y - bubble_size.height - 10.0,
@@ -1304,7 +1304,7 @@ pub fn compute_bubble_position(
 ### **16.3. Sync on overlay move**
 
 ```rust
-pub async fn sync_bubble_position(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn sync_bubble_position(&self) -> Result<()> {
     let overlay_pos = self.get_position().await?;
     let overlay_size = self.get_size().await?;
     let bubble = self.bubble_window.as_ref().ok_or_else(|| anyhow!("no bubble"))?;
@@ -1329,7 +1329,7 @@ pub async fn sync_bubble_position(&amp;self) -&gt; Result&lt;()&gt; {
 ### **16.5. Chat panel show**
 
 ```rust
-pub async fn show_chat_panel(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn show_chat_panel(&self) -> Result<()> {
     if let Some(chat) = self.chat_window.as_ref() {
         chat.show().await?;
         chat.set_focus().await?;
@@ -1349,9 +1349,9 @@ pub async fn show_chat_panel(&amp;self) -&gt; Result&lt;()&gt; {
 ```rust
 pub struct OverlayWindowManager {
     main_window: Arc<tauri::window>,
-    bubble_window: RwLock<option<arc<tauri::window>&gt;&gt;,
-    chat_window: RwLock<option<arc<tauri::window>&gt;&gt;,
-    state: Arc<rwlock<overlaywindowstate>&gt;,
+    bubble_window: RwLock<option<arc<tauri::window>>>,
+    chat_window: RwLock<option<arc<tauri::window>>>,
+    state: Arc<rwlock<overlaywindowstate>>,
     config: OverlayWindowConfig,
     platform: Arc<dyn platformwindowadapter="">,
     event_bus: Arc<overlayeventbus>,
@@ -1364,57 +1364,57 @@ pub struct OverlayWindowManager {
 ```rust
 impl OverlayWindowManager {
     pub async fn init(
-        app: &amp;tauri::AppHandle,
+        app: &tauri::AppHandle,
         config: OverlayWindowConfig,
-    ) -&gt; Result<self>;
+    ) -> Result<self>;
 
     // Lifecycle
-    pub async fn show(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn hide(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn toggle(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn shutdown(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn show(&self) -> Result<()>;
+    pub async fn hide(&self) -> Result<()>;
+    pub async fn toggle(&self) -> Result<()>;
+    pub async fn shutdown(&self) -> Result<()>;
 
-    // Position &amp; Size
-    pub async fn get_position(&amp;self) -&gt; Result<logicalposition>;
-    pub async fn get_size(&amp;self) -&gt; Result<logicalsize>;
-    pub async fn move_to(&amp;self, pos: LogicalPosition) -&gt; Result&lt;()&gt;;
-    pub async fn resize(&amp;self, size: LogicalSize) -&gt; Result&lt;()&gt;;
-    pub async fn set_scale(&amp;self, scale: f32) -&gt; Result&lt;()&gt;;
+    // Position & Size
+    pub async fn get_position(&self) -> Result<logicalposition>;
+    pub async fn get_size(&self) -> Result<logicalsize>;
+    pub async fn move_to(&self, pos: LogicalPosition) -> Result<()>;
+    pub async fn resize(&self, size: LogicalSize) -> Result<()>;
+    pub async fn set_scale(&self, scale: f32) -> Result<()>;
 
     // Anchor
-    pub async fn set_anchor(&amp;self, anchor: AnchorMode) -&gt; Result&lt;()&gt;;
-    pub async fn apply_anchor(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn set_anchor(&self, anchor: AnchorMode) -> Result<()>;
+    pub async fn apply_anchor(&self) -> Result<()>;
 
     // Click-through
-    pub async fn set_click_through(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn update_hit_test_region(&amp;self, region: HitTestRegion) -&gt; Result&lt;()&gt;;
+    pub async fn set_click_through(&self, enabled: bool) -> Result<()>;
+    pub async fn update_hit_test_region(&self, region: HitTestRegion) -> Result<()>;
 
     // Topmost
-    pub async fn set_topmost(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn refresh_topmost(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn set_topmost(&self, enabled: bool) -> Result<()>;
+    pub async fn refresh_topmost(&self) -> Result<()>;
 
     // Sub-windows
-    pub async fn show_bubble(&amp;self, content: BubbleContent) -&gt; Result&lt;()&gt;;
-    pub async fn hide_bubble(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn show_chat_panel(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn hide_chat_panel(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn show_bubble(&self, content: BubbleContent) -> Result<()>;
+    pub async fn hide_bubble(&self) -> Result<()>;
+    pub async fn show_chat_panel(&self) -> Result<()>;
+    pub async fn hide_chat_panel(&self) -> Result<()>;
 
     // Events
-    pub async fn handle_fullscreen_entered(&amp;self, category: AppCategory) -&gt; Result&lt;()&gt;;
-    pub async fn handle_fullscreen_exited(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn handle_mode_changed(&amp;self, mode: AppMode) -&gt; Result&lt;()&gt;;
-    pub async fn handle_dpi_changed(&amp;self, scale: f32) -&gt; Result&lt;()&gt;;
-    pub async fn handle_monitor_change(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn handle_fullscreen_entered(&self, category: AppCategory) -> Result<()>;
+    pub async fn handle_fullscreen_exited(&self) -> Result<()>;
+    pub async fn handle_mode_changed(&self, mode: AppMode) -> Result<()>;
+    pub async fn handle_dpi_changed(&self, scale: f32) -> Result<()>;
+    pub async fn handle_monitor_change(&self) -> Result<()>;
 
     // Drag
-    pub async fn handle_drag_end(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn handle_drag_end(&self) -> Result<()>;
 
     // Persistence
-    pub async fn save_state(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn load_state(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn save_state(&self) -> Result<()>;
+    pub async fn load_state(&self) -> Result<()>;
 
     // Subscription
-    pub fn subscribe_events(&amp;self) -&gt; broadcast::Receiver<overlayevent>;
+    pub fn subscribe_events(&self) -> broadcast::Receiver<overlayevent>;
 }
 ```
 
@@ -1448,13 +1448,13 @@ pub enum OverlayEvent {
 ```rust
 #[async_trait::async_trait]
 pub trait PlatformWindowAdapter: Send + Sync {
-    async fn apply_overlay_styles(&amp;self, hwnd: u64) -&gt; Result&lt;()&gt;;
-    async fn set_click_through(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt;;
-    async fn set_topmost(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt;;
-    async fn set_no_activate(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt;;
-    async fn get_taskbar_rect(&amp;self) -&gt; Option<rect>;
-    async fn enumerate_monitors(&amp;self) -&gt; Result<vec<monitorinfo>&gt;;
-    async fn get_current_monitor(&amp;self, hwnd: u64) -&gt; Result<monitorinfo>;
+    async fn apply_overlay_styles(&self, hwnd: u64) -> Result<()>;
+    async fn set_click_through(&self, hwnd: u64, enabled: bool) -> Result<()>;
+    async fn set_topmost(&self, hwnd: u64, enabled: bool) -> Result<()>;
+    async fn set_no_activate(&self, hwnd: u64, enabled: bool) -> Result<()>;
+    async fn get_taskbar_rect(&self) -> Option<rect>;
+    async fn enumerate_monitors(&self) -> Result<vec<monitorinfo>>;
+    async fn get_current_monitor(&self, hwnd: u64) -> Result<monitorinfo>;
 }
 ```
 
@@ -1465,21 +1465,21 @@ pub struct WindowsAdapter;
 
 #[async_trait::async_trait]
 impl PlatformWindowAdapter for WindowsAdapter {
-    async fn apply_overlay_styles(&amp;self, hwnd: u64) -&gt; Result&lt;()&gt; {
+    async fn apply_overlay_styles(&self, hwnd: u64) -> Result<()> {
         let hwnd = HWND(hwnd as isize);
         tokio::task::spawn_blocking(move || {
             apply_overlay_styles(hwnd)
         }).await?
     }
 
-    async fn set_click_through(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt; {
+    async fn set_click_through(&self, hwnd: u64, enabled: bool) -> Result<()> {
         let hwnd = HWND(hwnd as isize);
         tokio::task::spawn_blocking(move || {
             set_full_click_through(hwnd, enabled)
         }).await?
     }
 
-    async fn set_topmost(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt; {
+    async fn set_topmost(&self, hwnd: u64, enabled: bool) -> Result<()> {
         let hwnd = HWND(hwnd as isize);
         tokio::task::spawn_blocking(move || unsafe {
             let after = if enabled { HWND_TOPMOST } else { HWND_NOTOPMOST };
@@ -1492,11 +1492,11 @@ impl PlatformWindowAdapter for WindowsAdapter {
         }).await?
     }
 
-    async fn enumerate_monitors(&amp;self) -&gt; Result<vec<monitorinfo>&gt; {
+    async fn enumerate_monitors(&self) -> Result<vec<monitorinfo>> {
         tokio::task::spawn_blocking(|| enumerate_monitors()).await?
     }
 
-    async fn get_current_monitor(&amp;self, hwnd: u64) -&gt; Result<monitorinfo> {
+    async fn get_current_monitor(&self, hwnd: u64) -> Result<monitorinfo> {
         let hwnd = HWND(hwnd as isize);
         tokio::task::spawn_blocking(move || unsafe {
             let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
@@ -1504,21 +1504,21 @@ impl PlatformWindowAdapter for WindowsAdapter {
         }).await?
     }
 
-    async fn set_no_activate(&amp;self, hwnd: u64, enabled: bool) -&gt; Result&lt;()&gt; {
+    async fn set_no_activate(&self, hwnd: u64, enabled: bool) -> Result<()> {
         let hwnd = HWND(hwnd as isize);
         tokio::task::spawn_blocking(move || unsafe {
             let mut ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
             if enabled {
                 ex |= WS_EX_NOACTIVATE.0 as isize;
             } else {
-                ex &amp;= !(WS_EX_NOACTIVATE.0 as isize);
+                ex &= !(WS_EX_NOACTIVATE.0 as isize);
             }
             SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex);
             Ok(())
         }).await?
     }
 
-    async fn get_taskbar_rect(&amp;self) -&gt; Option<rect> {
+    async fn get_taskbar_rect(&self) -> Option<rect> {
         tokio::task::spawn_blocking(|| get_taskbar_rect()).await.ok().flatten()
     }
 }
@@ -1603,44 +1603,44 @@ interface OverlayStore {
   state: OverlayWindowState | null;
   isClickThrough: boolean;
 
-  refresh: () =&gt; Promise<void>;
-  show: () =&gt; Promise<void>;
-  hide: () =&gt; Promise<void>;
-  toggle: () =&gt; Promise<void>;
-  setAnchor: (anchor: AnchorMode) =&gt; Promise<void>;
-  setScale: (scale: number) =&gt; Promise<void>;
+  refresh: () => Promise<void>;
+  show: () => Promise<void>;
+  hide: () => Promise<void>;
+  toggle: () => Promise<void>;
+  setAnchor: (anchor: AnchorMode) => Promise<void>;
+  setScale: (scale: number) => Promise<void>;
 }
 
-export const useOverlayStore = create<overlaystore>((set, get) =&gt; ({
+export const useOverlayStore = create<overlaystore>((set, get) => ({
   state: null,
   isClickThrough: true,
 
-  refresh: async () =&gt; {
+  refresh: async () => {
     const state = await invoke<overlaywindowstate>("overlay_get_state");
     set({ state });
   },
 
-  show: async () =&gt; {
+  show: async () => {
     await invoke("overlay_show");
     await get().refresh();
   },
 
-  hide: async () =&gt; {
+  hide: async () => {
     await invoke("overlay_hide");
     await get().refresh();
   },
 
-  toggle: async () =&gt; {
+  toggle: async () => {
     await invoke("overlay_toggle");
     await get().refresh();
   },
 
-  setAnchor: async (anchor) =&gt; {
+  setAnchor: async (anchor) => {
     await invoke("overlay_set_anchor", { anchor });
     await get().refresh();
   },
 
-  setScale: async (scale) =&gt; {
+  setScale: async (scale) => {
     await invoke("overlay_set_scale", { scale });
     await get().refresh();
   },
@@ -1654,14 +1654,14 @@ function setupCanvasInteraction(canvas: HTMLCanvasElement) {
   const hitbox = new HitboxCache(canvas.width, canvas.height);
 
   // Rebuild hitbox periodically
-  setInterval(() =&gt; {
+  setInterval(() => {
     if (animationIsActive()) {
       hitbox.rebuild(canvas);
     }
   }, 100);
 
   // Update click-through on hover
-  canvas.addEventListener("pointermove", (e) =&gt; {
+  canvas.addEventListener("pointermove", (e) => {
     const opaque = hitbox.isOpaque(e.clientX, e.clientY);
     updateClickThrough(!opaque);
   });
@@ -1670,7 +1670,7 @@ function setupCanvasInteraction(canvas: HTMLCanvasElement) {
   setupDragHandler(canvas, hitbox);
 
   // Right click → radial menu
-  canvas.addEventListener("contextmenu", (e) =&gt; {
+  canvas.addEventListener("contextmenu", (e) => {
     if (hitbox.isOpaque(e.clientX, e.clientY)) {
       e.preventDefault();
       openRadialMenu(e.clientX, e.clientY);
@@ -1685,12 +1685,12 @@ function setupCanvasInteraction(canvas: HTMLCanvasElement) {
 export function SpeechBubble() {
   const [content, setContent] = useState<bubblecontent |="" null="">(null);
 
-  useEffect(() =&gt; {
-    const unlisten = listen<bubblecontent>("overlay_bubble_shown", (e) =&gt; {
+  useEffect(() => {
+    const unlisten = listen<bubblecontent>("overlay_bubble_shown", (e) => {
       setContent(e.payload);
-      setTimeout(() =&gt; setContent(null), e.payload.duration_ms);
+      setTimeout(() => setContent(null), e.payload.duration_ms);
     });
-    return () =&gt; { unlisten.then(fn =&gt; fn()); };
+    return () => { unlisten.then(fn => fn()); };
   }, []);
 
   if (!content) return null;
@@ -1710,7 +1710,7 @@ export function SpeechBubble() {
 ### **21.1. RAM budget**
 
 ```text
-Target: &lt; 50MB for overlay window subsystem.
+Target: < 50MB for overlay window subsystem.
 
 Breakdown:
   - Main window WebView: ~30MB.
@@ -1724,9 +1724,9 @@ Breakdown:
 | **Operation** | **Frequency** | **CPU** |
 |---|---|---|
 | Hitbox rebuild | 10 Hz (active) | ~0.1% |
-| Topmost refresh | 0.2 Hz | &lt; 0.01% |
+| Topmost refresh | 0.2 Hz | < 0.01% |
 | Move/resize event | On user action | Negligible |
-| Click-through toggle | Debounced 50ms | &lt; 0.01% |
+| Click-through toggle | Debounced 50ms | < 0.01% |
 
 ### **21.3. GPU budget**
 
@@ -1740,7 +1740,7 @@ Breakdown:
 
 ```text
 - Pause rendering khi window hidden.
-- Giảm FPS xuống 30 khi battery &lt; 20%.
+- Giảm FPS xuống 30 khi battery < 20%.
 - Pause topmost refresh khi battery saver mode.
 ```
 
@@ -1905,7 +1905,7 @@ chiro-pet/
 - [ ] Pointermove → move window.
 - [ ] Pointerup → drag end + snap.
 
-### **24.5. P0 Topmost &amp; Awareness**
+### **24.5. P0 Topmost & Awareness**
 
 - [ ] `SetWindowPos` topmost.
 - [ ] Topmost refresh timer (5s).
@@ -2045,7 +2045,7 @@ Frontend pointermove handler:
 HitboxCache.isOpaque(x, y):
   cx = floor(x / 4)
   cy = floor(y / 4)
-  return mask[cy * w + cx] &gt;= 10
+  return mask[cy * w + cx] >= 10
   ↓
 If opaque (character pixel):
   → want click-catch
@@ -2062,7 +2062,7 @@ Rust handler:
 PlatformAdapter.set_click_through(hwnd, enabled):
   GetWindowLongPtr(GWL_EXSTYLE)
   if enabled: ex |= WS_EX_TRANSPARENT
-  else: ex &amp;= !WS_EX_TRANSPARENT
+  else: ex &= !WS_EX_TRANSPARENT
   SetWindowLongPtr(GWL_EXSTYLE, ex)
   ↓
 Win32 OS now routes clicks accordingly

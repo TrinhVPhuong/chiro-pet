@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Revised `transition_and_behavior_implementation.md` to precisely integrate with Shader and Procedural Animation systems, detailing the frame execution pipeline and conflict resolution logic.
+- Authored deep AAA-grade technical specification for the Transition Engine and Offline Utility AI (`docs/plan/transition_and_behavior_implementation.md`).
 - Implemented full End-to-End Animation Runtime linking Rust `AnimationDirector` to React `AnimationController`.
 - Added support for `.vrma` files using `@pixiv/three-vrm-animation`.
 - Added Procedural Blinking logic alongside Breathing in the 3rd Animation Layer.
@@ -16,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Introduced Perlin noise-based micro-movements to spine and neck for increased liveliness.
 
 ### Changed
+- Auto-grouped 80+ `.vrma` files into categorized subfolders (`actions/`, `dances/`, `emotions/`, etc.) to improve project asset organization.
+- Updated `manifest.json` paths to reflect the new categorized `.vrma` file locations.
 - Converted animation `manifest.json` to reference new `.vrma` files instead of legacy `.bvh` files.
 - `AnimationController` now prioritizes loading assets from the AppData directory, falling back to bundled public assets only if necessary.
 - Rewrote Crossfade/Weight Blending logic in `AnimationController` for smoother animation transitions (`crossFadeFrom`).

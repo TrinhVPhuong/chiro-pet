@@ -6,8 +6,8 @@
             "id": "idle_neutral_1",
             "playback_type": "random",
             "files": [
-                { "file": "vrma/VRMA_01.vrma", "weight": 80 },
-                { "file": "vrma/VRMA_02.vrma", "weight": 20 }
+                { "file": "vrma/misc/VRMA_01.vrma", "weight": 80 },
+                { "file": "vrma/misc/VRMA_02.vrma", "weight": 20 }
             ],
             "states": [
                 "Idle",
@@ -24,7 +24,7 @@
         {
             "id": "drag_surprised",
             "playback_type": "single",
-            "file": "vrma/VRMA_05.vrma",
+            "file": "vrma/misc/VRMA_05.vrma",
             "states": [
                 "Dragging",
                 "MenuOpen"
@@ -42,8 +42,8 @@
             "id": "talk_happy",
             "playback_type": "sequence",
             "files": [
-                "vrma/VRMA_03.vrma",
-                "vrma/VRMA_04.vrma"
+                "vrma/misc/VRMA_03.vrma",
+                "vrma/misc/VRMA_04.vrma"
             ],
             "states": [
                 "Talking",
@@ -60,7 +60,7 @@
         {
             "id": "think_neutral",
             "playback_type": "single",
-            "file": "vrma/VRMA_07.vrma",
+            "file": "vrma/misc/VRMA_07.vrma",
             "states": [
                 "Thinking"
             ],

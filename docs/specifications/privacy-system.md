@@ -1,15 +1,15 @@
 # **Chiro-Pet Privacy System**
 
-&gt; Tài liệu thiết kế chính thức cho **Privacy System** của **Chiro-Pet**.  
-&gt; Hệ thống này là lớp **bảo vệ dữ liệu và quyền riêng tư** cho toàn bộ app: desktop context, AI request, memory, logs, API key, settings, export/delete data.
-&gt;
-&gt; **Nguyên tắc lõi:** Privacy System phải mặc định **an toàn, tối thiểu hóa dữ liệu, dễ kiểm soát và có thể xóa sạch**. Không subsystem nào được gửi dữ liệu nhạy cảm ra ngoài hoặc lưu memory nhạy cảm nếu chưa đi qua **PrivacyPolicy**, **Sanitizer**, **ConsentManager** và **SensitiveDataGuard**.
+> Tài liệu thiết kế chính thức cho **Privacy System** của **Chiro-Pet**.  
+> Hệ thống này là lớp **bảo vệ dữ liệu và quyền riêng tư** cho toàn bộ app: desktop context, AI request, memory, logs, API key, settings, export/delete data.
+>
+> **Nguyên tắc lõi:** Privacy System phải mặc định **an toàn, tối thiểu hóa dữ liệu, dễ kiểm soát và có thể xóa sạch**. Không subsystem nào được gửi dữ liệu nhạy cảm ra ngoài hoặc lưu memory nhạy cảm nếu chưa đi qua **PrivacyPolicy**, **Sanitizer**, **ConsentManager** và **SensitiveDataGuard**.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Privacy Layers](#3-privacy-layers)
 4. [Threat Model](#4-threat-model)
@@ -22,7 +22,7 @@
 11. [Sensitive Data Detection](#11-sensitive-data-detection)
 12. [Encrypted Storage](#12-encrypted-storage)
 13. [API Key Handling](#13-api-key-handling)
-14. [Logging &amp; Audit Privacy](#14-logging--audit-privacy)
+14. [Logging & Audit Privacy](#14-logging--audit-privacy)
 15. [Data Export](#15-data-export)
 16. [Data Delete](#16-data-delete)
 17. [Private Mode Integration](#17-private-mode-integration)
@@ -42,7 +42,7 @@
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -305,7 +305,7 @@ pub struct PrivacySettings {
 
 ```rust
 impl Default for PrivacySettings {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         let mut permissions = HashMap::new();
 
         permissions.insert(PrivacyPermission::AiChat, PermissionState::Granted);
@@ -556,10 +556,10 @@ pub struct PrivacyAwareSanitizer;
 
 impl PrivacyAwareSanitizer {
     pub fn sanitize_for_ai(
-        &amp;self,
+        &self,
         context: Option<sanitizeddesktopcontext>,
-        settings: &amp;PrivacySettings,
-    ) -&gt; Option<sanitizeddesktopcontext> {
+        settings: &PrivacySettings,
+    ) -> Option<sanitizeddesktopcontext> {
         if settings.restricted_mode {
             return None;
         }
@@ -645,17 +645,17 @@ pub struct AIPrivacyGuard;
 
 impl AIPrivacyGuard {
     pub fn evaluate(
-        &amp;self,
-        req: &amp;AIInteractionRequest,
-        settings: &amp;PrivacySettings,
-    ) -&gt; AIPrivacyDecision {
+        &self,
+        req: &AIInteractionRequest,
+        settings: &PrivacySettings,
+    ) -> AIPrivacyDecision {
         if settings.restricted_mode {
             return AIPrivacyDecision::BlockUseFallback {
                 reason: "restricted_mode".into(),
             };
         }
 
-        if settings.private_mode &amp;&amp; !settings.allow_ai_in_private_mode {
+        if settings.private_mode && !settings.allow_ai_in_private_mode {
             return AIPrivacyDecision::BlockUseFallback {
                 reason: "private_mode_blocks_ai".into(),
             };
@@ -664,7 +664,7 @@ impl AIPrivacyGuard {
         if matches!(
             req.interaction_type,
             InteractionType::ProactiveCheckin | InteractionType::FocusMilestone
-        ) &amp;&amp; (settings.quiet_mode || settings.streamer_mode || settings.private_mode) {
+        ) && (settings.quiet_mode || settings.streamer_mode || settings.private_mode) {
             return AIPrivacyDecision::BlockSilent {
                 reason: "mode_blocks_proactive".into(),
             };
@@ -691,10 +691,10 @@ impl AIPrivacyGuard {
         );
 
         match (desktop_allowed, memory_allowed) {
-            (true, true) =&gt; AIPrivacyDecision::AllowFull,
-            (false, true) =&gt; AIPrivacyDecision::AllowWithoutDesktopContext,
-            (true, false) =&gt; AIPrivacyDecision::AllowWithoutMemory,
-            (false, false) =&gt; AIPrivacyDecision::AllowMinimal,
+            (true, true) => AIPrivacyDecision::AllowFull,
+            (false, true) => AIPrivacyDecision::AllowWithoutDesktopContext,
+            (true, false) => AIPrivacyDecision::AllowWithoutMemory,
+            (false, false) => AIPrivacyDecision::AllowMinimal,
         }
     }
 }
@@ -705,12 +705,12 @@ impl AIPrivacyGuard {
 Ngay cả prompt đã build cũng phải đi qua redaction trước khi log.
 
 ```rust
-pub fn redact_prompt_for_log(prompt: &amp;str) -&gt; String {
+pub fn redact_prompt_for_log(prompt: &str) -> String {
     let mut s = prompt.to_string();
-    s = redact_api_keys(&amp;s);
-    s = redact_tokens(&amp;s);
-    s = redact_password_like(&amp;s);
-    s = redact_file_paths(&amp;s);
+    s = redact_api_keys(&s);
+    s = redact_tokens(&s);
+    s = redact_password_like(&s);
+    s = redact_file_paths(&s);
     s
 }
 ```
@@ -778,17 +778,17 @@ pub struct MemoryPrivacyGuard {
 
 impl MemoryPrivacyGuard {
     pub fn evaluate(
-        &amp;self,
-        candidate: &amp;MemoryOperationCandidate,
-        settings: &amp;PrivacySettings,
-    ) -&gt; MemoryPrivacyDecision {
+        &self,
+        candidate: &MemoryOperationCandidate,
+        settings: &PrivacySettings,
+    ) -> MemoryPrivacyDecision {
         if settings.restricted_mode {
             return MemoryPrivacyDecision::Reject {
                 reason: "restricted_mode".into(),
             };
         }
 
-        if settings.private_mode &amp;&amp; !settings.allow_memory_write_in_private_mode {
+        if settings.private_mode && !settings.allow_memory_write_in_private_mode {
             return MemoryPrivacyDecision::Reject {
                 reason: "private_mode_blocks_memory_write".into(),
             };
@@ -800,13 +800,13 @@ impl MemoryPrivacyGuard {
             };
         }
 
-        let sensitivity = self.detector.classify(&amp;candidate.content);
+        let sensitivity = self.detector.classify(&candidate.content);
 
         match sensitivity {
-            SensitivityLevel::Secret =&gt; MemoryPrivacyDecision::Reject {
+            SensitivityLevel::Secret => MemoryPrivacyDecision::Reject {
                 reason: "secret_detected".into(),
             },
-            SensitivityLevel::Sensitive =&gt; {
+            SensitivityLevel::Sensitive => {
                 if !has_permission(settings, PrivacyPermission::SensitiveMemoryWrite) {
                     MemoryPrivacyDecision::PendingApproval {
                         reason: "sensitive_memory_requires_approval".into(),
@@ -817,7 +817,7 @@ impl MemoryPrivacyGuard {
                     MemoryPrivacyDecision::Save
                 }
             }
-            SensitivityLevel::Personal | SensitivityLevel::Public =&gt; {
+            SensitivityLevel::Personal | SensitivityLevel::Public => {
                 MemoryPrivacyDecision::Save
             }
         }
@@ -861,7 +861,7 @@ pub struct SensitivePattern {
 ### **11.3. Pattern examples**
 
 ```rust
-pub fn default_patterns() -&gt; Vec<sensitivepattern> {
+pub fn default_patterns() -> Vec<sensitivepattern> {
     vec![
         SensitivePattern {
             name: "openai_api_key".into(),
@@ -901,10 +901,10 @@ pub fn default_patterns() -&gt; Vec<sensitivepattern> {
 
 ```rust
 impl SensitiveDataDetector {
-    pub fn classify(&amp;self, text: &amp;str) -&gt; SensitivityLevel {
+    pub fn classify(&self, text: &str) -> SensitivityLevel {
         let mut max_level = SensitivityLevel::Public;
 
-        for pattern in &amp;self.patterns {
+        for pattern in &self.patterns {
             if pattern.regex.is_match(text) {
                 max_level = max_sensitivity(max_level, pattern.sensitivity);
             }
@@ -913,12 +913,12 @@ impl SensitiveDataDetector {
         max_level
     }
 
-    pub fn redact(&amp;self, text: &amp;str) -&gt; String {
+    pub fn redact(&self, text: &str) -> String {
         let mut out = text.to_string();
 
-        for pattern in &amp;self.patterns {
+        for pattern in &self.patterns {
             out = pattern.regex
-                .replace_all(&amp;out, format!("[REDACTED:{}]", pattern.name))
+                .replace_all(&out, format!("[REDACTED:{}]", pattern.name))
                 .to_string();
         }
 
@@ -992,8 +992,8 @@ pub enum EncryptionBackend {
 ```rust
 #[async_trait::async_trait]
 pub trait EncryptionService: Send + Sync {
-    async fn encrypt_string(&amp;self, plaintext: &amp;str) -&gt; Result<encryptedvalue>;
-    async fn decrypt_string(&amp;self, encrypted: &amp;EncryptedValue) -&gt; Result<string>;
+    async fn encrypt_string(&self, plaintext: &str) -> Result<encryptedvalue>;
+    async fn decrypt_string(&self, encrypted: &EncryptedValue) -> Result<string>;
 }
 ```
 
@@ -1004,11 +1004,11 @@ pub struct WindowsDpapiEncryption;
 
 #[async_trait::async_trait]
 impl EncryptionService for WindowsDpapiEncryption {
-    async fn encrypt_string(&amp;self, plaintext: &amp;str) -&gt; Result<encryptedvalue> {
+    async fn encrypt_string(&self, plaintext: &str) -> Result<encryptedvalue> {
         let bytes = plaintext.as_bytes().to_vec();
 
         let encrypted = tokio::task::spawn_blocking(move || {
-            dpapi_encrypt(&amp;bytes)
+            dpapi_encrypt(&bytes)
         }).await??;
 
         Ok(EncryptedValue {
@@ -1019,10 +1019,10 @@ impl EncryptionService for WindowsDpapiEncryption {
         })
     }
 
-    async fn decrypt_string(&amp;self, encrypted: &amp;EncryptedValue) -&gt; Result<string> {
-        let bytes = base64::decode(&amp;encrypted.ciphertext_base64)?;
+    async fn decrypt_string(&self, encrypted: &EncryptedValue) -> Result<string> {
+        let bytes = base64::decode(&encrypted.ciphertext_base64)?;
         let decrypted = tokio::task::spawn_blocking(move || {
-            dpapi_decrypt(&amp;bytes)
+            dpapi_decrypt(&bytes)
         }).await??;
 
         Ok(String::from_utf8(decrypted)?)
@@ -1095,7 +1095,7 @@ Return AIProviderConfigSafe
 
 ---
 
-## **14. Logging &amp; Audit Privacy**
+## **14. Logging & Audit Privacy**
 
 ### **14.1. Log categories**
 
@@ -1297,20 +1297,20 @@ Settings reset: confirm once.
 
 ```rust
 pub async fn delete_data(
-    &amp;self,
+    &self,
     scope: DeleteScope,
     confirmation: DeleteConfirmation,
-) -&gt; Result<deleteresult> {
+) -> Result<deleteresult> {
     self.validate_delete_confirmation(scope, confirmation)?;
 
     match scope {
-        DeleteScope::AiHistory =&gt; self.ai_store.delete_all_history().await?,
-        DeleteScope::Memories =&gt; self.memory_store.delete_all().await?,
-        DeleteScope::CharacterStates =&gt; self.state_store.delete_all().await?,
-        DeleteScope::Logs =&gt; self.log_store.delete_all().await?,
-        DeleteScope::Settings =&gt; self.settings_store.reset_to_default().await?,
-        DeleteScope::ProviderCredentials =&gt; self.provider_store.delete_credentials().await?,
-        DeleteScope::Everything =&gt; self.full_wipe().await?,
+        DeleteScope::AiHistory => self.ai_store.delete_all_history().await?,
+        DeleteScope::Memories => self.memory_store.delete_all().await?,
+        DeleteScope::CharacterStates => self.state_store.delete_all().await?,
+        DeleteScope::Logs => self.log_store.delete_all().await?,
+        DeleteScope::Settings => self.settings_store.reset_to_default().await?,
+        DeleteScope::ProviderCredentials => self.provider_store.delete_credentials().await?,
+        DeleteScope::Everything => self.full_wipe().await?,
     }
 
     self.audit.log(PrivacyAuditEvent::DataDeleted { scope }).await?;
@@ -1415,7 +1415,7 @@ Quiet Mode = không muốn app làm phiền.
 ### **18.3. Guard**
 
 ```rust
-pub fn blocks_proactive(settings: &amp;PrivacySettings) -&gt; bool {
+pub fn blocks_proactive(settings: &PrivacySettings) -> bool {
     settings.quiet_mode
         || settings.private_mode
         || settings.streamer_mode
@@ -1478,57 +1478,57 @@ pub struct PrivacyManager {
 
 ```rust
 impl PrivacyManager {
-    pub async fn init() -&gt; Result<self>;
+    pub async fn init() -> Result<self>;
 
     // Settings
-    pub async fn get_settings(&amp;self) -&gt; Result<privacysettings>;
-    pub async fn update_settings(&amp;self, patch: PrivacySettingsPatch) -&gt; Result<privacysettings>;
-    pub async fn reset_settings(&amp;self) -&gt; Result<privacysettings>;
+    pub async fn get_settings(&self) -> Result<privacysettings>;
+    pub async fn update_settings(&self, patch: PrivacySettingsPatch) -> Result<privacysettings>;
+    pub async fn reset_settings(&self) -> Result<privacysettings>;
 
     // Permissions
-    pub async fn get_permission(&amp;self, permission: PrivacyPermission) -&gt; Result<permissionstate>;
+    pub async fn get_permission(&self, permission: PrivacyPermission) -> Result<permissionstate>;
     pub async fn set_permission(
-        &amp;self,
+        &self,
         permission: PrivacyPermission,
         state: PermissionState,
-    ) -&gt; Result&lt;()&gt;;
+    ) -> Result<()>;
 
-    pub async fn has_permission(&amp;self, permission: PrivacyPermission) -&gt; Result<bool>;
+    pub async fn has_permission(&self, permission: PrivacyPermission) -> Result<bool>;
 
     // Modes
-    pub async fn set_private_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn set_quiet_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn set_streamer_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn set_restricted_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
+    pub async fn set_private_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn set_quiet_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn set_streamer_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn set_restricted_mode(&self, enabled: bool) -> Result<()>;
 
     // Guards
     pub async fn evaluate_ai_request(
-        &amp;self,
-        req: &amp;AIInteractionRequest,
-    ) -&gt; Result<aiprivacydecision>;
+        &self,
+        req: &AIInteractionRequest,
+    ) -> Result<aiprivacydecision>;
 
     pub async fn evaluate_memory_operation(
-        &amp;self,
-        candidate: &amp;MemoryOperationCandidate,
-    ) -&gt; Result<memoryprivacydecision>;
+        &self,
+        candidate: &MemoryOperationCandidate,
+    ) -> Result<memoryprivacydecision>;
 
-    pub async fn sanitize_text_for_log(&amp;self, text: &amp;str) -&gt; Result<string>;
-    pub async fn classify_sensitivity(&amp;self, text: &amp;str) -&gt; Result<sensitivitylevel>;
+    pub async fn sanitize_text_for_log(&self, text: &str) -> Result<string>;
+    pub async fn classify_sensitivity(&self, text: &str) -> Result<sensitivitylevel>;
 
     // Encryption
-    pub async fn encrypt_secret(&amp;self, plaintext: &amp;str) -&gt; Result<encryptedvalue>;
-    pub async fn decrypt_secret(&amp;self, encrypted: &amp;EncryptedValue) -&gt; Result<string>;
+    pub async fn encrypt_secret(&self, plaintext: &str) -> Result<encryptedvalue>;
+    pub async fn decrypt_secret(&self, encrypted: &EncryptedValue) -> Result<string>;
 
     // Export/Delete
-    pub async fn export_data(&amp;self, scope: ExportScope) -&gt; Result<privacyexportpackage>;
+    pub async fn export_data(&self, scope: ExportScope) -> Result<privacyexportpackage>;
     pub async fn delete_data(
-        &amp;self,
+        &self,
         scope: DeleteScope,
         confirmation: DeleteConfirmation,
-    ) -&gt; Result<deleteresult>;
+    ) -> Result<deleteresult>;
 
     // Events
-    pub fn subscribe_events(&amp;self) -&gt; broadcast::Receiver<privacyevent>;
+    pub fn subscribe_events(&self) -> broadcast::Receiver<privacyevent>;
 }
 ```
 
@@ -1707,23 +1707,23 @@ import { create } from "zustand";
 interface PrivacyStore {
   settings: PrivacySettings | null;
 
-  refresh: () =&gt; Promise<void>;
-  setMode: (mode: PrivacyMode, enabled: boolean) =&gt; Promise<void>;
+  refresh: () => Promise<void>;
+  setMode: (mode: PrivacyMode, enabled: boolean) => Promise<void>;
   setPermission: (
     permission: PrivacyPermission,
     state: PermissionState,
-  ) =&gt; Promise<void>;
+  ) => Promise<void>;
 }
 
-export const usePrivacyStore = create<privacystore>((set, get) =&gt; ({
+export const usePrivacyStore = create<privacystore>((set, get) => ({
   settings: null,
 
-  refresh: async () =&gt; {
+  refresh: async () => {
     const settings = await invoke<privacysettings>("privacy_get_settings");
     set({ settings });
   },
 
-  setMode: async (mode, enabled) =&gt; {
+  setMode: async (mode, enabled) => {
     const command = {
       private: "privacy_set_private_mode",
       quiet: "privacy_set_quiet_mode",
@@ -1735,7 +1735,7 @@ export const usePrivacyStore = create<privacystore>((set, get) =&gt; ({
     await get().refresh();
   },
 
-  setPermission: async (permission, state) =&gt; {
+  setPermission: async (permission, state) => {
     await invoke("privacy_set_permission", { permission, state });
     await get().refresh();
   },

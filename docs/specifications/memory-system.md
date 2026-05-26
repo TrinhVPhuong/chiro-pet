@@ -1,9 +1,9 @@
 # **Chiro-Pet Memory System**
 
-&gt; Tài liệu thiết kế chính thức cho **Memory System** của **Chiro-Pet**.  
-&gt; Hệ thống này quản lý cách app ghi nhớ, truy xuất, phân loại, cập nhật và sử dụng ký ức trong quá trình tương tác với user và nhiều character profile.
-&gt;
-&gt; **Nguyên tắc lõi:** Memory là lớp dữ liệu dài hạn giúp nhân vật cá nhân hóa hành vi. AI có thể **đề xuất** ghi nhớ, cập nhật, patch hoặc xóa memory, nhưng mọi thao tác ghi đều phải đi qua **validator + memory policy + user approval rule**.
+> Tài liệu thiết kế chính thức cho **Memory System** của **Chiro-Pet**.  
+> Hệ thống này quản lý cách app ghi nhớ, truy xuất, phân loại, cập nhật và sử dụng ký ức trong quá trình tương tác với user và nhiều character profile.
+>
+> **Nguyên tắc lõi:** Memory là lớp dữ liệu dài hạn giúp nhân vật cá nhân hóa hành vi. AI có thể **đề xuất** ghi nhớ, cập nhật, patch hoặc xóa memory, nhưng mọi thao tác ghi đều phải đi qua **validator + memory policy + user approval rule**.
 
 ---
 
@@ -348,7 +348,7 @@ CREATE TABLE memories (
 
     -- Metadata
     importance INTEGER NOT NULL DEFAULT 3 CHECK (importance BETWEEN 1 AND 5),
-    confidence REAL NOT NULL DEFAULT 0.8 CHECK (confidence &gt;= 0.0 AND confidence &lt;= 1.0),
+    confidence REAL NOT NULL DEFAULT 0.8 CHECK (confidence >= 0.0 AND confidence <= 1.0),
     sensitivity TEXT NOT NULL DEFAULT 'normal' CHECK (
         sensitivity IN ('low', 'normal', 'sensitive', 'highly_sensitive')
     ),
@@ -563,9 +563,9 @@ pub struct Memory {
 
     pub created_at: DateTime<utc>,
     pub updated_at: DateTime<utc>,
-    pub last_used_at: Option<datetime<utc>&gt;,
-    pub last_verified_at: Option<datetime<utc>&gt;,
-    pub expires_at: Option<datetime<utc>&gt;,
+    pub last_used_at: Option<datetime<utc>>,
+    pub last_verified_at: Option<datetime<utc>>,
+    pub expires_at: Option<datetime<utc>>,
 
     pub use_count: u32,
     pub retrieval_count: u32,
@@ -574,7 +574,7 @@ pub struct Memory {
     pub conflict_group_id: Option<string>,
 
     pub keywords: Vec<string>,
-    pub embedding: Option<vec<f32>&gt;,
+    pub embedding: Option<vec<f32>>,
 
     pub metadata: serde_json::Value,
 }
@@ -666,7 +666,7 @@ pub async fn propose_memory(
     &self,
     candidate: MemoryCandidate,
     ctx: MemoryContext,
-) -&gt; Result<memoryproposalresult> {
+) -> Result<memoryproposalresult> {
     // 1. Normalize
     let candidate = self.normalizer.normalize(candidate)?;
 
@@ -690,31 +690,31 @@ pub async fn propose_memory(
 
     // 8. Execute
     match decision {
-        MemoryDecision::AutoSave =&gt; {
+        MemoryDecision::AutoSave => {
             let memory = self.store.create(classified.into_memory()).await?;
             self.audit.log_create(&memory, "auto_save").await?;
             Ok(MemoryProposalResult::Saved(memory.id))
         }
 
-        MemoryDecision::RequireApproval =&gt; {
+        MemoryDecision::RequireApproval => {
             let pending = self.store.create_candidate(classified).await?;
             self.events.emit_pending_memory(pending.id).await?;
             Ok(MemoryProposalResult::Pending(pending.id))
         }
 
-        MemoryDecision::MergeWith(existing_id) =&gt; {
+        MemoryDecision::MergeWith(existing_id) => {
             let memory = self.store.merge(existing_id, classified).await?;
             self.audit.log_merge(&memory).await?;
             Ok(MemoryProposalResult::Merged(memory.id))
         }
 
-        MemoryDecision::PatchExisting(existing_id, patch) =&gt; {
+        MemoryDecision::PatchExisting(existing_id, patch) => {
             let memory = self.store.patch(existing_id, patch).await?;
             self.audit.log_patch(&memory).await?;
             Ok(MemoryProposalResult::Patched(memory.id))
         }
 
-        MemoryDecision::Reject(reason) =&gt; {
+        MemoryDecision::Reject(reason) => {
             self.audit.log_reject(&classified, &reason).await?;
             Ok(MemoryProposalResult::Rejected(reason))
         }
@@ -728,7 +728,7 @@ Có thể auto-save nếu:
 
 ```text
 - sensitivity = low hoặc normal
-- confidence &gt;= 0.7
+- confidence >= 0.7
 - type thuộc nhóm an toàn
 - không có conflict nghiêm trọng
 - không trùng quá gần với memory cũ
@@ -756,7 +756,7 @@ Cần user duyệt nếu:
 - type = major_event
 - type = work_context có thông tin công việc cụ thể
 - type = schedule_pattern suy ra từ hành vi
-- confidence &lt; 0.7 nhưng importance cao
+- confidence < 0.7 nhưng importance cao
 - AI đề xuất xóa memory
 - AI đề xuất patch memory quan trọng
 ```
@@ -809,7 +809,7 @@ pub struct MemoryQuery {
     pub scopes: Vec<memoryscope>,
     pub active_character_id: Option<string>,
 
-    pub memory_types: Option<vec<string>&gt;,
+    pub memory_types: Option<vec<string>>,
     pub text_query: Option<string>,
     pub keywords: Vec<string>,
 
@@ -829,8 +829,8 @@ pub struct MemoryQuery {
 ```rust
 pub fn apply_scope_filter(
     query: &MemoryQuery,
-    active_character_id: Option&lt;&str&gt;,
-) -&gt; ScopeFilter {
+    active_character_id: Option<&str>,
+) -> ScopeFilter {
     ScopeFilter {
         shared: query.scopes.contains(&MemoryScope::Shared),
         character_id: if query.scopes.contains(&MemoryScope::Character) {
@@ -892,7 +892,7 @@ pub struct MemoryPatch {
     pub keywords_add: Vec<string>,
     pub keywords_remove: Vec<string>,
     pub metadata_merge: serde_json::Value,
-    pub last_verified_at: Option<datetime<utc>&gt;,
+    pub last_verified_at: Option<datetime<utc>>,
 }
 ```
 
@@ -926,7 +926,7 @@ pub async fn patch_memory(
     memory_id: String,
     patch: MemoryPatch,
     actor: MemoryActor,
-) -&gt; Result<memory> {
+) -> Result<memory> {
     let old = self.store.get(&memory_id).await?;
 
     self.policy.can_patch(&old, &patch, actor)?;
@@ -1139,7 +1139,7 @@ Kiểm tra:
 
 ```text
 - content không rỗng
-- content &lt;= 500 chars
+- content <= 500 chars
 - importance 1-5
 - confidence 0-1
 - scope hợp lệ
@@ -1195,9 +1195,9 @@ Decision:
 
 | **Similarity** | **Action** |
 |---|---|
-| &gt; 0.92 | Reject duplicate hoặc merge use_count |
+| > 0.92 | Reject duplicate hoặc merge use_count |
 | 0.75-0.92 | Merge candidate |
-| &lt; 0.75 | Create new |
+| < 0.75 | Create new |
 
 ### **14.6. ConflictValidator**
 
@@ -1235,19 +1235,19 @@ score =
 ### **15.2. Thành phần điểm**
 
 ```rust
-fn importance_score(importance: u8) -&gt; f32 {
+fn importance_score(importance: u8) -> f32 {
     importance as f32 / 5.0
 }
 
-fn recency_score(age_days: f32) -&gt; f32 {
+fn recency_score(age_days: f32) -> f32 {
     (-age_days / 30.0).exp()
 }
 
-fn confidence_score(confidence: f32) -&gt; f32 {
+fn confidence_score(confidence: f32) -> f32 {
     confidence.clamp(0.0, 1.0)
 }
 
-fn novelty_score(use_count: u32) -&gt; f32 {
+fn novelty_score(use_count: u32) -> f32 {
     1.0 / (1.0 + use_count as f32 * 0.2)
 }
 ```
@@ -1452,43 +1452,43 @@ impl MemoryManager {
         &self,
         candidate: MemoryCandidate,
         ctx: MemoryContext,
-    ) -&gt; Result<memoryproposalresult>;
+    ) -> Result<memoryproposalresult>;
 
     pub async fn query_memories(
         &self,
         query: MemoryQuery,
-    ) -&gt; Result<vec<memory>&gt;;
+    ) -> Result<vec<memory>>;
 
     pub async fn get_memory(
         &self,
         id: &str,
-    ) -&gt; Result<option<memory>&gt;;
+    ) -> Result<option<memory>>;
 
     pub async fn patch_memory(
         &self,
         id: &str,
         patch: MemoryPatch,
         actor: MemoryActor,
-    ) -&gt; Result<memory>;
+    ) -> Result<memory>;
 
     pub async fn delete_memory(
         &self,
         id: &str,
         mode: DeleteMode,
         actor: MemoryActor,
-    ) -&gt; Result&lt;()&gt;;
+    ) -> Result<()>;
 
     pub async fn approve_candidate(
         &self,
         candidate_id: &str,
         user_patch: Option<memorypatch>,
-    ) -&gt; Result<memory>;
+    ) -> Result<memory>;
 
     pub async fn reject_candidate(
         &self,
         candidate_id: &str,
         reason: Option<string>,
-    ) -&gt; Result&lt;()&gt;;
+    ) -> Result<()>;
 
     pub async fn build_prompt_memories(
         &self,
@@ -1496,7 +1496,7 @@ impl MemoryManager {
         user_message: &str,
         profile: RetrievalProfile,
         budget: MemoryPromptBudget,
-    ) -&gt; Result<promptmemoryblock>;
+    ) -> Result<promptmemoryblock>;
 }
 ```
 

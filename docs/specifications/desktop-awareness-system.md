@@ -1,15 +1,15 @@
 # **Chiro-Pet Desktop Awareness System**
 
-&gt; Tài liệu thiết kế chính thức cho **Desktop Awareness System** của **Chiro-Pet**.
-&gt; Đây là **core differentiator**: hệ thống cho phép companion **biết user đang làm gì** trên desktop, từ đó AI có thể phản hồi đúng ngữ cảnh, đúng thời điểm, đúng mức độ làm phiền.
-&gt;
-&gt; **Nguyên tắc lõi:** App **quan sát desktop** để tạo ra ngữ cảnh, nhưng **không bao giờ gửi raw data** lên AI. Mọi thông tin nhạy cảm (window title, file path, process name, clipboard) đều được **sanitize** trước khi rời khỏi process boundary. User phải có **quyền tắt** toàn bộ desktop awareness bất kỳ lúc nào.
+> Tài liệu thiết kế chính thức cho **Desktop Awareness System** của **Chiro-Pet**.
+> Đây là **core differentiator**: hệ thống cho phép companion **biết user đang làm gì** trên desktop, từ đó AI có thể phản hồi đúng ngữ cảnh, đúng thời điểm, đúng mức độ làm phiền.
+>
+> **Nguyên tắc lõi:** App **quan sát desktop** để tạo ra ngữ cảnh, nhưng **không bao giờ gửi raw data** lên AI. Mọi thông tin nhạy cảm (window title, file path, process name, clipboard) đều được **sanitize** trước khi rời khỏi process boundary. User phải có **quyền tắt** toàn bộ desktop awareness bất kỳ lúc nào.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Awareness Layers](#3-awareness-layers)
 4. [Data Model](#4-data-model)
@@ -23,12 +23,12 @@
 12. [Context Sanitizer](#12-context-sanitizer)
 13. [Polling Strategy](#13-polling-strategy)
 14. [Event Emission](#14-event-emission)
-15. [Privacy &amp; Permission Model](#15-privacy--permission-model)
+15. [Privacy & Permission Model](#15-privacy--permission-model)
 16. [Backend: DesktopAwarenessManager](#16-backend-desktopawarenessmanager)
 17. [Platform Layer (Windows)](#17-platform-layer-windows)
 18. [IPC Contract](#18-ipc-contract)
 19. [Frontend Awareness Store](#19-frontend-awareness-store)
-20. [Logging &amp; Audit](#20-logging--audit)
+20. [Logging & Audit](#20-logging--audit)
 21. [Error Handling](#21-error-handling)
 22. [Performance Considerations](#22-performance-considerations)
 23. [File Structure](#23-file-structure)
@@ -40,7 +40,7 @@
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -90,7 +90,7 @@ Tài liệu này **không** mô tả:
 | **4** | **No screenshot, no clipboard** | Không capture màn hình, không đọc clipboard. |
 | **5** | **No keystroke logging** | Chỉ idle detection qua API hệ thống, không log key. |
 | **6** | **User-controlled** | User có thể tắt toàn bộ awareness, hoặc per-category. |
-| **7** | **Debounced &amp; cached** | Polling thấp, kết quả cache, event emit khi thay đổi thực sự. |
+| **7** | **Debounced & cached** | Polling thấp, kết quả cache, event emit khi thay đổi thực sự. |
 | **8** | **Confidence-scored** | Mỗi classification có confidence để AI dùng "có vẻ" thay vì "chắc chắn". |
 | **9** | **Auditable** | Mọi sanitization và mode change có log local. |
 | **10** | **Opt-out friendly** | Khi user tắt, app vẫn chạy bình thường với context = null. |
@@ -219,7 +219,7 @@ pub(crate) struct RawForegroundInfo {
 }
 ```
 
-&gt; ⚠️ `RawForegroundInfo` là `pub(crate)`. **Không** expose qua IPC hoặc serialize.
+> ⚠️ `RawForegroundInfo` là `pub(crate)`. **Không** expose qua IPC hoặc serialize.
 
 ### **4.2. Classified data**
 
@@ -413,7 +413,7 @@ Registry là JSON file ngoài code để dễ maintain:
 }
 ```
 
-&gt; ⚠️ Trong code chỉ dùng category, **không reference process name**. Process name chỉ tồn tại trong classifier internal.
+> ⚠️ Trong code chỉ dùng category, **không reference process name**. Process name chỉ tồn tại trong classifier internal.
 
 ---
 
@@ -473,7 +473,7 @@ use windows::Win32::System::Threading::{
     PROCESS_QUERY_LIMITED_INFORMATION,
 };
 
-pub(crate) fn capture_foreground() -&gt; Option<rawforegroundinfo> {
+pub(crate) fn capture_foreground() -> Option<rawforegroundinfo> {
     unsafe {
         let hwnd = GetForegroundWindow();
         if hwnd.0 == 0 {
@@ -481,7 +481,7 @@ pub(crate) fn capture_foreground() -&gt; Option<rawforegroundinfo> {
         }
 
         let mut pid: u32 = 0;
-        GetWindowThreadProcessId(hwnd, Some(&amp;mut pid));
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
 
         let process_name = query_process_name(pid)?;
         let window_title = read_window_text(hwnd);
@@ -509,9 +509,9 @@ pub(crate) fn capture_foreground() -&gt; Option<rawforegroundinfo> {
 
 ```rust
 pub(crate) fn has_window_changed(
-    last: Option&lt;&amp;RawForegroundInfo&gt;,
-    current: &amp;RawForegroundInfo,
-) -&gt; WindowChangeKind {
+    last: Option<&RawForegroundInfo>,
+    current: &RawForegroundInfo,
+) -> WindowChangeKind {
     let Some(last) = last else {
         return WindowChangeKind::FirstCapture;
     };
@@ -549,13 +549,13 @@ pub(crate) enum WindowChangeKind {
 ```rust
 pub struct AppClassifier {
     registry: Arc<appcategoryregistry>,
-    custom_overrides: Arc<rwlock<hashmap<string, appcategory="">&gt;&gt;,
+    custom_overrides: Arc<rwlock<hashmap<string, appcategory="">>>,
 }
 
 impl AppClassifier {
-    pub fn classify(&amp;self, raw: &amp;RawForegroundInfo) -&gt; ClassificationResult {
+    pub fn classify(&self, raw: &RawForegroundInfo) -> ClassificationResult {
         // 1. Check user custom override first
-        if let Some(category) = self.lookup_custom(&amp;raw.process_name) {
+        if let Some(category) = self.lookup_custom(&raw.process_name) {
             return ClassificationResult {
                 category,
                 subcategory: None,
@@ -566,7 +566,7 @@ impl AppClassifier {
         }
 
         // 2. Lookup registry by process name
-        if let Some(entry) = self.registry.match_process(&amp;raw.process_name) {
+        if let Some(entry) = self.registry.match_process(&raw.process_name) {
             return ClassificationResult {
                 category: entry.category,
                 subcategory: entry.subcategory,
@@ -577,7 +577,7 @@ impl AppClassifier {
         }
 
         // 3. Heuristic: fullscreen + high GPU → likely game
-        if raw.is_fullscreen &amp;&amp; self.gpu_monitor.is_high_load() {
+        if raw.is_fullscreen && self.gpu_monitor.is_high_load() {
             return ClassificationResult {
                 category: AppCategory::Game,
                 subcategory: None,
@@ -588,7 +588,7 @@ impl AppClassifier {
         }
 
         // 4. Title hints (for browser-as-media)
-        if let Some(hit) = self.match_title_hints(&amp;raw.window_title) {
+        if let Some(hit) = self.match_title_hints(&raw.window_title) {
             return hit;
         }
 
@@ -625,13 +625,13 @@ pub enum ClassificationSource {
 ### **6.2. Title hint matcher**
 
 ```rust
-fn match_title_hints(&amp;self, raw_title: &amp;str) -&gt; Option<classificationresult> {
+fn match_title_hints(&self, raw_title: &str) -> Option<classificationresult> {
     // Title hints ONLY used to refine browser/media,
     // never to extract user data.
     let title_lower = raw_title.to_lowercase();
 
-    const MEDIA_HINTS: &amp;[&amp;str] = &amp;["youtube", "netflix", "spotify", "bilibili", "twitch"];
-    const MEETING_HINTS: &amp;[&amp;str] = &amp;["zoom meeting", "google meet", "microsoft teams"];
+    const MEDIA_HINTS: &[&str] = &["youtube", "netflix", "spotify", "bilibili", "twitch"];
+    const MEETING_HINTS: &[&str] = &["zoom meeting", "google meet", "microsoft teams"];
 
     for hint in MEDIA_HINTS {
         if title_lower.contains(hint) {
@@ -661,7 +661,7 @@ fn match_title_hints(&amp;self, raw_title: &amp;str) -&gt; Option<classification
 }
 ```
 
-&gt; ⚠️ Title hints **chỉ check sự tồn tại của keyword**, không lưu title, không log title.
+> ⚠️ Title hints **chỉ check sự tồn tại của keyword**, không lưu title, không log title.
 
 ### **6.3. User custom override**
 
@@ -676,10 +676,10 @@ Settings UI:
 
 ```rust
 pub async fn set_custom_category(
-    &amp;self,
+    &self,
     process_name: String,
     category: AppCategory,
-) -&gt; Result&lt;()&gt; {
+) -> Result<()> {
     let mut overrides = self.custom_overrides.write().await;
     overrides.insert(process_name.to_lowercase(), category);
     self.persist_overrides().await?;
@@ -708,13 +708,13 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetLastInputInfo, LASTINPUTINFO,
 };
 
-pub(crate) fn get_idle_seconds() -&gt; u32 {
+pub(crate) fn get_idle_seconds() -> u32 {
     unsafe {
         let mut lii = LASTINPUTINFO {
             cbSize: std::mem::size_of::<lastinputinfo>() as u32,
             dwTime: 0,
         };
-        if GetLastInputInfo(&amp;mut lii).as_bool() {
+        if GetLastInputInfo(&mut lii).as_bool() {
             let tick_now = windows::Win32::System::SystemInformation::GetTickCount();
             let elapsed_ms = tick_now.saturating_sub(lii.dwTime);
             elapsed_ms / 1000
@@ -735,7 +735,7 @@ pub struct IdleConfig {
 }
 
 impl Default for IdleConfig {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         Self {
             idle_threshold_seconds: 300,
             deep_idle_threshold_seconds: 1800,
@@ -752,17 +752,17 @@ impl Default for IdleConfig {
 #[serde(rename_all = "snake_case")]
 pub enum IdleState {
     Active,
-    Idle,        // &gt; 5 min no input
-    DeepIdle,    // &gt; 30 min no input
-    Afk,         // &gt; 60 min no input
+    Idle,        // > 5 min no input
+    DeepIdle,    // > 30 min no input
+    Afk,         // > 60 min no input
 }
 
-pub fn classify_idle(seconds: u32, cfg: &amp;IdleConfig) -&gt; IdleState {
-    if seconds &gt;= cfg.afk_threshold_seconds {
+pub fn classify_idle(seconds: u32, cfg: &IdleConfig) -> IdleState {
+    if seconds >= cfg.afk_threshold_seconds {
         IdleState::Afk
-    } else if seconds &gt;= cfg.deep_idle_threshold_seconds {
+    } else if seconds >= cfg.deep_idle_threshold_seconds {
         IdleState::DeepIdle
-    } else if seconds &gt;= cfg.idle_threshold_seconds {
+    } else if seconds >= cfg.idle_threshold_seconds {
         IdleState::Idle
     } else {
         IdleState::Active
@@ -779,7 +779,7 @@ pub fn classify_idle(seconds: u32, cfg: &amp;IdleConfig) -&gt; IdleState {
 ```
 
 ```rust
-pub(crate) fn is_lock_screen(raw: &amp;RawForegroundInfo) -&gt; bool {
+pub(crate) fn is_lock_screen(raw: &RawForegroundInfo) -> bool {
     let lower = raw.process_name.to_lowercase();
     lower == "logonui.exe" || raw.window_class == "LockScreenBackstopFrame"
 }
@@ -792,10 +792,10 @@ pub(crate) fn is_lock_screen(raw: &amp;RawForegroundInfo) -&gt; bool {
 ### **8.1. Fullscreen logic**
 
 ```rust
-pub(crate) fn check_fullscreen(hwnd: HWND) -&gt; bool {
+pub(crate) fn check_fullscreen(hwnd: HWND) -> bool {
     unsafe {
         let mut rect = RECT::default();
-        if GetWindowRect(hwnd, &amp;mut rect).is_err() {
+        if GetWindowRect(hwnd, &mut rect).is_err() {
             return false;
         }
 
@@ -804,15 +804,15 @@ pub(crate) fn check_fullscreen(hwnd: HWND) -&gt; bool {
             cbSize: std::mem::size_of::<monitorinfo>() as u32,
             ..Default::default()
         };
-        if !GetMonitorInfoW(monitor, &amp;mut mi).as_bool() {
+        if !GetMonitorInfoW(monitor, &mut mi).as_bool() {
             return false;
         }
 
         let monitor_rect = mi.rcMonitor;
         rect.left == monitor_rect.left
-            &amp;&amp; rect.top == monitor_rect.top
-            &amp;&amp; rect.right == monitor_rect.right
-            &amp;&amp; rect.bottom == monitor_rect.bottom
+            && rect.top == monitor_rect.top
+            && rect.right == monitor_rect.right
+            && rect.bottom == monitor_rect.bottom
     }
 }
 ```
@@ -880,7 +880,7 @@ Restore overlay
 | **Mode** | **Trigger** | **Exit condition** |
 |---|---|---|
 | **Normal** | Default | Bất kỳ trigger khác |
-| **Focus** | App = developer_tool / office / reading, session ≥ 15 min, không bị ngắt | App đổi category, idle &gt; 10 min |
+| **Focus** | App = developer_tool / office / reading, session ≥ 15 min, không bị ngắt | App đổi category, idle > 10 min |
 | **Gaming** | App = game OR (fullscreen + high GPU), session ≥ 5 min | App đổi, fullscreen tắt |
 | **Meeting** | App = meeting | App đổi |
 | **Watching** | App = media + fullscreen | Fullscreen tắt, app đổi |
@@ -891,12 +891,12 @@ Restore overlay
 
 ```rust
 pub fn decide_mode(
-    classified: &amp;ClassifiedContext,
+    classified: &ClassifiedContext,
     idle: IdleState,
     is_locked: bool,
     current_mode: AppMode,
     mode_duration: Duration,
-) -&gt; ModeDecision {
+) -> ModeDecision {
     if is_locked {
         return ModeDecision::transition(AppMode::Locked, 1.0, "lock_screen");
     }
@@ -905,29 +905,29 @@ pub fn decide_mode(
         return ModeDecision::transition(AppMode::Idle, 0.95, "deep_idle");
     }
 
-    if matches!(idle, IdleState::Idle) &amp;&amp; current_mode == AppMode::Normal {
+    if matches!(idle, IdleState::Idle) && current_mode == AppMode::Normal {
         return ModeDecision::transition(AppMode::Idle, 0.7, "idle_threshold");
     }
 
     match classified.app_category {
-        AppCategory::Meeting =&gt; {
+        AppCategory::Meeting => {
             return ModeDecision::transition(AppMode::Meeting, 0.9, "meeting_app");
         }
-        AppCategory::Game =&gt; {
+        AppCategory::Game => {
             return ModeDecision::transition(AppMode::Gaming, 0.85, "game_app");
         }
-        AppCategory::Media =&gt; {
+        AppCategory::Media => {
             if classified.is_fullscreen {
                 return ModeDecision::transition(AppMode::Watching, 0.85, "media_fullscreen");
             }
         }
-        AppCategory::DeveloperTool | AppCategory::Office | AppCategory::Reading =&gt; {
+        AppCategory::DeveloperTool | AppCategory::Office | AppCategory::Reading => {
             let session_minutes = mode_duration.as_secs() / 60;
-            if session_minutes &gt;= 15 &amp;&amp; idle == IdleState::Active {
+            if session_minutes >= 15 && idle == IdleState::Active {
                 return ModeDecision::transition(AppMode::Focus, 0.8, "long_focus_session");
             }
         }
-        _ =&gt; {}
+        _ => {}
     }
 
     ModeDecision::stay(current_mode, 0.6)
@@ -944,9 +944,9 @@ pub struct ModeDecision {
 ### **9.4. Hysteresis (chống flapping)**
 
 ```text
-- Mode không đổi nếu transition &lt; 30s sau lần đổi cuối.
+- Mode không đổi nếu transition < 30s sau lần đổi cuối.
   → trừ trường hợp Locked / Idle (luôn ưu tiên).
-- Confidence &lt; 0.7: giữ mode cũ.
+- Confidence < 0.7: giữ mode cũ.
 - Counter: cần 3 consecutive ticks confirm trước khi đổi.
 ```
 
@@ -960,18 +960,18 @@ pub struct ModeStabilizer {
 }
 
 impl ModeStabilizer {
-    pub fn observe(&amp;mut self, decision: ModeDecision, current: AppMode) -&gt; Option<appmode> {
+    pub fn observe(&mut self, decision: ModeDecision, current: AppMode) -> Option<appmode> {
         // High-priority modes bypass hysteresis
         if matches!(decision.mode, AppMode::Locked | AppMode::Idle) {
             return Some(decision.mode);
         }
 
         let elapsed = Utc::now() - self.last_transition_at;
-        if elapsed &lt; chrono::Duration::from_std(self.min_dwell_time).unwrap() {
+        if elapsed < chrono::Duration::from_std(self.min_dwell_time).unwrap() {
             return None;
         }
 
-        if decision.confidence &lt; 0.7 {
+        if decision.confidence < 0.7 {
             self.pending_mode = None;
             self.confirmations = 0;
             return None;
@@ -984,8 +984,8 @@ impl ModeStabilizer {
             self.confirmations = 1;
         }
 
-        if self.confirmations &gt;= self.required_confirmations
-            &amp;&amp; self.pending_mode != Some(current)
+        if self.confirmations >= self.required_confirmations
+            && self.pending_mode != Some(current)
         {
             self.last_transition_at = Utc::now();
             self.confirmations = 0;
@@ -1009,23 +1009,23 @@ impl ModeStabilizer {
 pub struct ContextClassifier {
     app_classifier: Arc<appclassifier>,
     idle_config: IdleConfig,
-    mode_stabilizer: Arc<mutex<modestabilizer>&gt;,
+    mode_stabilizer: Arc<mutex<modestabilizer>>,
     session_tracker: Arc<sessiontracker>,
-    last_classified: Arc<rwlock<option<classifiedcontext>&gt;&gt;,
-    current_mode: Arc<rwlock<appmode>&gt;,
+    last_classified: Arc<rwlock<option<classifiedcontext>>>,
+    current_mode: Arc<rwlock<appmode>>,
 }
 
 impl ContextClassifier {
     pub async fn process(
-        &amp;self,
+        &self,
         raw: RawForegroundInfo,
         idle_seconds: u32,
-    ) -&gt; ClassifierOutput {
+    ) -> ClassifierOutput {
         // 1. Classify app
-        let class_result = self.app_classifier.classify(&amp;raw);
+        let class_result = self.app_classifier.classify(&raw);
 
         // 2. Update session
-        let session = self.session_tracker.update(&amp;raw).await;
+        let session = self.session_tracker.update(&raw).await;
 
         // 3. Build classified context
         let classified = ClassifiedContext {
@@ -1040,15 +1040,15 @@ impl ContextClassifier {
         };
 
         // 4. Idle state
-        let idle_state = classify_idle(idle_seconds, &amp;self.idle_config);
+        let idle_state = classify_idle(idle_seconds, &self.idle_config);
 
         // 5. Lock detection
-        let is_locked = is_lock_screen(&amp;raw);
+        let is_locked = is_lock_screen(&raw);
 
         // 6. Mode decision
         let current_mode = *self.current_mode.read().await;
         let mode_duration = self.session_tracker.mode_duration(current_mode).await;
-        let decision = decide_mode(&amp;classified, idle_state, is_locked, current_mode, mode_duration);
+        let decision = decide_mode(&classified, idle_state, is_locked, current_mode, mode_duration);
 
         // 7. Stabilize
         let new_mode_opt = self.mode_stabilizer.lock().await.observe(decision, current_mode);
@@ -1107,9 +1107,9 @@ pub struct ModeSession {
 }
 
 pub struct SessionTracker {
-    current_app_session: Arc<rwlock<option<appsession>&gt;&gt;,
-    current_mode_session: Arc<rwlock<option<modesession>&gt;&gt;,
-    history: Arc<rwlock<vecdeque<sessionhistoryentry>&gt;&gt;,
+    current_app_session: Arc<rwlock<option<appsession>>>,
+    current_mode_session: Arc<rwlock<option<modesession>>>,
+    history: Arc<rwlock<vecdeque<sessionhistoryentry>>>,
 }
 ```
 
@@ -1118,7 +1118,7 @@ pub struct SessionTracker {
 ```text
 - Khi category đổi → close current app session, open new.
 - Khi mode đổi → close current mode session, open new.
-- Idle &gt; 5 min: pause session (không tính time).
+- Idle > 5 min: pause session (không tính time).
 - Idle quay lại Active: resume.
 - App quit / lock: close all sessions.
 ```
@@ -1126,14 +1126,14 @@ pub struct SessionTracker {
 ### **11.4. Session duration sanitization**
 
 ```rust
-pub fn round_duration_minutes(seconds: u64) -&gt; u32 {
+pub fn round_duration_minutes(seconds: u64) -> u32 {
     let minutes = seconds / 60;
     // Round to nearest 5 minutes
     ((minutes + 2) / 5 * 5) as u32
 }
 ```
 
-&gt; Ví dụ: 47 phút → gửi AI là "45 phút". Tránh leak thông tin chính xác.
+> Ví dụ: 47 phút → gửi AI là "45 phút". Tránh leak thông tin chính xác.
 
 ### **11.5. Focus milestone hook**
 
@@ -1173,19 +1173,19 @@ Convert `ClassifiedContext` + `AppMode` + system clock → `SanitizedDesktopCont
 ```rust
 pub struct ContextSanitizer {
     privacy: Arc<privacysettings>,
-    sensitive_apps: Arc<rwlock<hashset<string>&gt;&gt;, // user-marked
+    sensitive_apps: Arc<rwlock<hashset<string>>>, // user-marked
 }
 
 impl ContextSanitizer {
     pub async fn sanitize(
-        &amp;self,
-        classified: &amp;ClassifiedContext,
+        &self,
+        classified: &ClassifiedContext,
         mode: AppMode,
         mode_confidence: f32,
         idle_state: IdleState,
         idle_seconds: u32,
         session_seconds: u64,
-    ) -&gt; Option<sanitizeddesktopcontext> {
+    ) -> Option<sanitizeddesktopcontext> {
         // Privacy mode → return None
         if self.privacy.private_mode {
             return None;
@@ -1260,13 +1260,13 @@ Khi sensitive app foreground:
 ### **12.4. Time of day**
 
 ```rust
-pub fn current_time_of_day() -&gt; TimeOfDay {
+pub fn current_time_of_day() -> TimeOfDay {
     let hour = Local::now().hour();
     match hour {
-        5..=11 =&gt; TimeOfDay::Morning,
-        12..=17 =&gt; TimeOfDay::Afternoon,
-        18..=21 =&gt; TimeOfDay::Evening,
-        _ =&gt; TimeOfDay::Night,
+        5..=11 => TimeOfDay::Morning,
+        12..=17 => TimeOfDay::Afternoon,
+        18..=21 => TimeOfDay::Evening,
+        _ => TimeOfDay::Night,
     }
 }
 ```
@@ -1292,7 +1292,7 @@ pub fn current_time_of_day() -&gt; TimeOfDay {
 ```text
 Default: 2s foreground tick.
 
-When idle &gt; 5 min:
+When idle > 5 min:
   → Slow down to 10s foreground tick.
 
 When fullscreen + Gaming/Watching:
@@ -1312,13 +1312,13 @@ When user explicitly disables awareness:
 
 ```rust
 pub struct AwarenessScheduler {
-    foreground_interval: Arc<rwlock<duration>&gt;,
-    idle_interval: Arc<rwlock<duration>&gt;,
+    foreground_interval: Arc<rwlock<duration>>,
+    idle_interval: Arc<rwlock<duration>>,
     enabled: Arc<atomicbool>,
 }
 
 impl AwarenessScheduler {
-    pub async fn run(&amp;self, manager: Arc<desktopawarenessmanager>) {
+    pub async fn run(&self, manager: Arc<desktopawarenessmanager>) {
         let mut fg_ticker = tokio::time::interval(*self.foreground_interval.read().await);
         let mut idle_ticker = tokio::time::interval(*self.idle_interval.read().await);
 
@@ -1329,13 +1329,13 @@ impl AwarenessScheduler {
             }
 
             tokio::select! {
-                _ = fg_ticker.tick() =&gt; {
+                _ = fg_ticker.tick() => {
                     if let Err(e) = manager.tick_foreground().await {
                         tracing::warn!("foreground tick failed: {}", e);
                     }
-                    self.adapt_interval(&amp;mut fg_ticker, &amp;self.foreground_interval).await;
+                    self.adapt_interval(&mut fg_ticker, &self.foreground_interval).await;
                 }
-                _ = idle_ticker.tick() =&gt; {
+                _ = idle_ticker.tick() => {
                     manager.tick_idle().await.ok();
                 }
             }
@@ -1347,12 +1347,12 @@ impl AwarenessScheduler {
 ### **13.4. CPU budget**
 
 ```text
-Target: &lt; 0.3% CPU on average (Ryzen 5 / i5 baseline).
+Target: < 0.3% CPU on average (Ryzen 5 / i5 baseline).
 
 Measurements:
 - GetForegroundWindow: ~5μs
 - QueryProcessImageName: ~50μs
-- Total tick: &lt; 200μs typical, &lt; 1ms worst case.
+- Total tick: < 200μs typical, < 1ms worst case.
 - 2s interval → ~0.01% CPU.
 ```
 
@@ -1400,16 +1400,16 @@ pub struct AwarenessEventBus {
 }
 
 impl AwarenessEventBus {
-    pub fn new() -&gt; Self {
+    pub fn new() -> Self {
         let (sender, _) = broadcast::channel(128);
         Self { sender }
     }
 
-    pub fn subscribe(&amp;self) -&gt; broadcast::Receiver<awarenessevent> {
+    pub fn subscribe(&self) -> broadcast::Receiver<awarenessevent> {
         self.sender.subscribe()
     }
 
-    pub fn emit(&amp;self, event: AwarenessEvent) {
+    pub fn emit(&self, event: AwarenessEvent) {
         let _ = self.sender.send(event);
     }
 }
@@ -1429,7 +1429,7 @@ impl AwarenessEventBus {
 
 ---
 
-## **15. Privacy &amp; Permission Model**
+## **15. Privacy & Permission Model**
 
 ### **15.1. Permission levels**
 
@@ -1447,7 +1447,7 @@ pub struct AwarenessPermissions {
 }
 
 impl Default for AwarenessPermissions {
-    fn default() -&gt; Self {
+    fn default() -> Self {
         Self {
             foreground_detection: true,
             idle_detection: true,
@@ -1483,7 +1483,7 @@ On first launch:
   │                                                      │
   │ We WILL detect (locally only):                       │
   │ • App category (e.g. "developer_tool")              │
-  │ • Whether you're idle (&gt;5 min no input)             │
+  │ • Whether you're idle (>5 min no input)             │
   │ • Whether app is fullscreen                         │
   │ • Time of day                                       │
   │                                                      │
@@ -1494,7 +1494,7 @@ On first launch:
 ### **15.3. Granular toggle UI**
 
 ```text
-Settings &gt; Privacy &gt; Desktop Awareness
+Settings > Privacy > Desktop Awareness
 
   Foreground app detection         [●─── ON ]
   Idle detection                    [●─── ON ]
@@ -1536,8 +1536,8 @@ When all awareness disabled:
 
 ```rust
 pub struct DesktopAwarenessManager {
-    config: Arc<rwlock<awarenessconfig>&gt;,
-    permissions: Arc<rwlock<awarenesspermissions>&gt;,
+    config: Arc<rwlock<awarenessconfig>>,
+    permissions: Arc<rwlock<awarenesspermissions>>,
     classifier: Arc<contextclassifier>,
     sanitizer: Arc<contextsanitizer>,
     session_tracker: Arc<sessiontracker>,
@@ -1545,9 +1545,9 @@ pub struct DesktopAwarenessManager {
     event_bus: Arc<awarenesseventbus>,
     audit: Arc<awarenessauditlogger>,
 
-    last_raw: Arc<rwlock<option<rawforegroundinfo>&gt;&gt;,
-    last_sanitized: Arc<rwlock<option<sanitizeddesktopcontext>&gt;&gt;,
-    last_idle_state: Arc<rwlock<idlestate>&gt;,
+    last_raw: Arc<rwlock<option<rawforegroundinfo>>>,
+    last_sanitized: Arc<rwlock<option<sanitizeddesktopcontext>>>,
+    last_idle_state: Arc<rwlock<idlestate>>,
     last_fullscreen: Arc<atomicbool>,
 }
 ```
@@ -1556,44 +1556,44 @@ pub struct DesktopAwarenessManager {
 
 ```rust
 impl DesktopAwarenessManager {
-    pub async fn init(config: AwarenessConfig) -&gt; Result<self>;
-    pub async fn start(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn stop(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn init(config: AwarenessConfig) -> Result<self>;
+    pub async fn start(&self) -> Result<()>;
+    pub async fn stop(&self) -> Result<()>;
 
     // Querying
-    pub async fn current_context(&amp;self) -&gt; Option<sanitizeddesktopcontext>;
-    pub async fn current_mode(&amp;self) -&gt; AppMode;
-    pub async fn current_idle_state(&amp;self) -&gt; IdleState;
-    pub async fn is_fullscreen_active(&amp;self) -&gt; bool;
+    pub async fn current_context(&self) -> Option<sanitizeddesktopcontext>;
+    pub async fn current_mode(&self) -> AppMode;
+    pub async fn current_idle_state(&self) -> IdleState;
+    pub async fn is_fullscreen_active(&self) -> bool;
 
     // Permission management
-    pub async fn update_permissions(&amp;self, perms: AwarenessPermissions) -&gt; Result&lt;()&gt;;
-    pub async fn get_permissions(&amp;self) -&gt; AwarenessPermissions;
-    pub async fn disable_all(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn enable_all(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn update_permissions(&self, perms: AwarenessPermissions) -> Result<()>;
+    pub async fn get_permissions(&self) -> AwarenessPermissions;
+    pub async fn disable_all(&self) -> Result<()>;
+    pub async fn enable_all(&self) -> Result<()>;
 
     // Sensitive apps
-    pub async fn add_sensitive_app(&amp;self, process_name: String) -&gt; Result&lt;()&gt;;
-    pub async fn remove_sensitive_app(&amp;self, process_name: String) -&gt; Result&lt;()&gt;;
-    pub async fn list_sensitive_apps(&amp;self) -&gt; Vec<string>;
+    pub async fn add_sensitive_app(&self, process_name: String) -> Result<()>;
+    pub async fn remove_sensitive_app(&self, process_name: String) -> Result<()>;
+    pub async fn list_sensitive_apps(&self) -> Vec<string>;
 
     // Custom category overrides
-    pub async fn set_custom_category(&amp;self, process_name: String, category: AppCategory) -&gt; Result&lt;()&gt;;
-    pub async fn clear_custom_category(&amp;self, process_name: String) -&gt; Result&lt;()&gt;;
+    pub async fn set_custom_category(&self, process_name: String, category: AppCategory) -> Result<()>;
+    pub async fn clear_custom_category(&self, process_name: String) -> Result<()>;
 
     // Subscription
-    pub fn subscribe_events(&amp;self) -&gt; broadcast::Receiver<awarenessevent>;
+    pub fn subscribe_events(&self) -> broadcast::Receiver<awarenessevent>;
 
     // Internal ticks
-    pub(crate) async fn tick_foreground(&amp;self) -&gt; Result&lt;()&gt;;
-    pub(crate) async fn tick_idle(&amp;self) -&gt; Result&lt;()&gt;;
+    pub(crate) async fn tick_foreground(&self) -> Result<()>;
+    pub(crate) async fn tick_idle(&self) -> Result<()>;
 }
 ```
 
 ### **16.3. Main foreground tick flow**
 
 ```rust
-pub(crate) async fn tick_foreground(&amp;self) -&gt; Result&lt;()&gt; {
+pub(crate) async fn tick_foreground(&self) -> Result<()> {
     let perms = self.permissions.read().await.clone();
 
     if !perms.foreground_detection {
@@ -1607,7 +1607,7 @@ pub(crate) async fn tick_foreground(&amp;self) -&gt; Result&lt;()&gt; {
 
     // 2. Detect change
     let last = self.last_raw.read().await.clone();
-    let change = has_window_changed(last.as_ref(), &amp;raw);
+    let change = has_window_changed(last.as_ref(), &raw);
 
     // 3. Get idle
     let idle_seconds = if perms.idle_detection {
@@ -1647,7 +1647,7 @@ pub(crate) async fn tick_foreground(&amp;self) -&gt; Result&lt;()&gt; {
         let session_seconds = self.session_tracker
             .current_app_session_seconds().await;
         let sanitized = self.sanitizer.sanitize(
-            &amp;output.classified,
+            &output.classified,
             output.mode,
             output.mode_confidence,
             output.idle_state,
@@ -1671,7 +1671,7 @@ pub(crate) async fn tick_foreground(&amp;self) -&gt; Result&lt;()&gt; {
 ### **16.4. Lifecycle**
 
 ```rust
-pub async fn start(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn start(&self) -> Result<()> {
     let scheduler = self.scheduler.clone();
     let manager = Arc::new(self.clone());
     tokio::spawn(async move {
@@ -1681,7 +1681,7 @@ pub async fn start(&amp;self) -&gt; Result&lt;()&gt; {
     Ok(())
 }
 
-pub async fn stop(&amp;self) -&gt; Result&lt;()&gt; {
+pub async fn stop(&self) -> Result<()> {
     self.scheduler.disable();
     self.event_bus.emit(AwarenessEvent::AwarenessDisabled);
     Ok(())
@@ -1696,10 +1696,10 @@ pub async fn stop(&amp;self) -&gt; Result&lt;()&gt; {
 
 ```rust
 pub trait PlatformAwareness: Send + Sync {
-    fn capture_foreground(&amp;self) -&gt; Option<rawforegroundinfo>;
-    fn get_idle_seconds(&amp;self) -&gt; u32;
-    fn is_lock_screen_active(&amp;self) -&gt; bool;
-    fn register_session_notifications(&amp;self) -&gt; Result&lt;()&gt;;
+    fn capture_foreground(&self) -> Option<rawforegroundinfo>;
+    fn get_idle_seconds(&self) -> u32;
+    fn is_lock_screen_active(&self) -> bool;
+    fn register_session_notifications(&self) -> Result<()>;
 }
 ```
 
@@ -1711,7 +1711,7 @@ pub struct WindowsAwareness {
 }
 
 impl PlatformAwareness for WindowsAwareness {
-    fn capture_foreground(&amp;self) -&gt; Option<rawforegroundinfo> {
+    fn capture_foreground(&self) -> Option<rawforegroundinfo> {
         let raw = capture_foreground()?;
 
         // Exclude Chiro-Pet's own overlay window
@@ -1722,17 +1722,17 @@ impl PlatformAwareness for WindowsAwareness {
         Some(raw)
     }
 
-    fn get_idle_seconds(&amp;self) -&gt; u32 {
+    fn get_idle_seconds(&self) -> u32 {
         get_idle_seconds()
     }
 
-    fn is_lock_screen_active(&amp;self) -&gt; bool {
+    fn is_lock_screen_active(&self) -> bool {
         // WTSGetActiveConsoleSessionId + WTSQuerySessionInformation
         // or check LogonUI.exe foreground
         is_lock_screen_via_wts()
     }
 
-    fn register_session_notifications(&amp;self) -&gt; Result&lt;()&gt; {
+    fn register_session_notifications(&self) -> Result<()> {
         unsafe {
             WTSRegisterSessionNotification(
                 self.hwnd_overlay,
@@ -1865,16 +1865,16 @@ interface AwarenessStore {
   permissions: AwarenessPermissions | null;
   enabled: boolean;
 
-  refresh: () =&gt; Promise<void>;
-  onContextUpdated: (ctx: SanitizedDesktopContext) =&gt; void;
-  onModeChanged: (payload: ModeChangedPayload) =&gt; void;
-  onIdleChanged: (payload: IdleStateChangedPayload) =&gt; void;
-  onFullscreen: (active: boolean) =&gt; void;
-  onLockChanged: (locked: boolean) =&gt; void;
-  setEnabled: (enabled: boolean) =&gt; Promise<void>;
+  refresh: () => Promise<void>;
+  onContextUpdated: (ctx: SanitizedDesktopContext) => void;
+  onModeChanged: (payload: ModeChangedPayload) => void;
+  onIdleChanged: (payload: IdleStateChangedPayload) => void;
+  onFullscreen: (active: boolean) => void;
+  onLockChanged: (locked: boolean) => void;
+  setEnabled: (enabled: boolean) => Promise<void>;
 }
 
-export const useAwarenessStore = create<awarenessstore>((set, get) =&gt; ({
+export const useAwarenessStore = create<awarenessstore>((set, get) => ({
   context: null,
   mode: "normal",
   idleState: "active",
@@ -1883,7 +1883,7 @@ export const useAwarenessStore = create<awarenessstore>((set, get) =&gt; ({
   permissions: null,
   enabled: true,
 
-  refresh: async () =&gt; {
+  refresh: async () => {
     const [context, mode, idle, perms] = await Promise.all([
       invoke<sanitizeddesktopcontext |="" null="">("awareness_get_context"),
       invoke<appmode>("awareness_get_mode"),
@@ -1893,13 +1893,13 @@ export const useAwarenessStore = create<awarenessstore>((set, get) =&gt; ({
     set({ context, mode, idleState: idle, permissions: perms });
   },
 
-  onContextUpdated: (ctx) =&gt; set({ context: ctx }),
-  onModeChanged: (payload) =&gt; set({ mode: payload.to }),
-  onIdleChanged: (payload) =&gt; set({ idleState: payload.to }),
-  onFullscreen: (active) =&gt; set({ isFullscreen: active }),
-  onLockChanged: (locked) =&gt; set({ isLocked: locked }),
+  onContextUpdated: (ctx) => set({ context: ctx }),
+  onModeChanged: (payload) => set({ mode: payload.to }),
+  onIdleChanged: (payload) => set({ idleState: payload.to }),
+  onFullscreen: (active) => set({ isFullscreen: active }),
+  onLockChanged: (locked) => set({ isLocked: locked }),
 
-  setEnabled: async (enabled) =&gt; {
+  setEnabled: async (enabled) => {
     if (enabled) await invoke("awareness_enable_all");
     else await invoke("awareness_disable_all");
     set({ enabled });
@@ -1915,31 +1915,31 @@ import { listen } from "@tauri-apps/api/event";
 export async function setupAwarenessListeners() {
   const store = useAwarenessStore.getState();
 
-  await listen<sanitizeddesktopcontext>("awareness_context_updated", (e) =&gt; {
+  await listen<sanitizeddesktopcontext>("awareness_context_updated", (e) => {
     useAwarenessStore.getState().onContextUpdated(e.payload);
   });
 
-  await listen<modechangedpayload>("awareness_mode_changed", (e) =&gt; {
+  await listen<modechangedpayload>("awareness_mode_changed", (e) => {
     useAwarenessStore.getState().onModeChanged(e.payload);
   });
 
-  await listen<idlestatechangedpayload>("awareness_idle_changed", (e) =&gt; {
+  await listen<idlestatechangedpayload>("awareness_idle_changed", (e) => {
     useAwarenessStore.getState().onIdleChanged(e.payload);
   });
 
-  await listen("awareness_fullscreen_entered", () =&gt; {
+  await listen("awareness_fullscreen_entered", () => {
     useAwarenessStore.getState().onFullscreen(true);
   });
 
-  await listen("awareness_fullscreen_exited", () =&gt; {
+  await listen("awareness_fullscreen_exited", () => {
     useAwarenessStore.getState().onFullscreen(false);
   });
 
-  await listen("awareness_screen_locked", () =&gt; {
+  await listen("awareness_screen_locked", () => {
     useAwarenessStore.getState().onLockChanged(true);
   });
 
-  await listen("awareness_screen_unlocked", () =&gt; {
+  await listen("awareness_screen_unlocked", () => {
     useAwarenessStore.getState().onLockChanged(false);
   });
 }
@@ -1949,14 +1949,14 @@ export async function setupAwarenessListeners() {
 
 ```text
 - ModeBadge: hiển thị mode hiện tại (Normal/Focus/Gaming/Meeting)
-- IdleDot: chấm nhỏ khi user idle &gt; 5 min
+- IdleDot: chấm nhỏ khi user idle > 5 min
 - AwarenessPrivacyBanner: hiện banner khi private mode hoặc disabled
 - FocusTimer: hiển thị thời gian focus hiện tại
 ```
 
 ---
 
-## **20. Logging &amp; Audit**
+## **20. Logging & Audit**
 
 ### **20.1. Audit schema**
 
@@ -2003,7 +2003,7 @@ CREATE INDEX idx_awareness_log_created ON awareness_audit_log(created_at);
 ```text
 - Keep audit log 14 days.
 - Daily VACUUM old entries.
-- User can clear log anytime in Settings &gt; Privacy.
+- User can clear log anytime in Settings > Privacy.
 ```
 
 ### **20.4. Debug mode**
@@ -2076,18 +2076,18 @@ pub struct FailureTracker {
 }
 
 impl FailureTracker {
-    pub fn record_failure(&amp;self) -&gt; FailureAction {
+    pub fn record_failure(&self) -> FailureAction {
         let n = self.consecutive_failures.fetch_add(1, Ordering::Relaxed) + 1;
-        if n &gt;= self.disable_threshold {
+        if n >= self.disable_threshold {
             FailureAction::Disable
-        } else if n &gt;= self.degraded_threshold {
+        } else if n >= self.degraded_threshold {
             FailureAction::Degrade
         } else {
             FailureAction::Continue
         }
     }
 
-    pub fn record_success(&amp;self) {
+    pub fn record_success(&self) {
         self.consecutive_failures.store(0, Ordering::Relaxed);
     }
 }
@@ -2104,7 +2104,7 @@ impl FailureTracker {
 - SanitizedContext cache: ~200 bytes
 - Session history: 100 entries × ~100 bytes = 10KB
 - App category registry: ~5KB JSON parsed
-- Total awareness module: &lt; 50KB resident
+- Total awareness module: < 50KB resident
 ```
 
 ### **22.2. CPU optimization**
@@ -2114,7 +2114,7 @@ impl FailureTracker {
 - Idle query: ~10μs
 - Fullscreen check: ~50μs
 - Classification: ~20μs (hashmap lookup)
-- Total per tick: &lt; 300μs
+- Total per tick: < 300μs
 
 At 2s interval: 0.015% CPU.
 At 10s interval (idle): 0.003% CPU.
@@ -2130,7 +2130,7 @@ At 10s interval (idle): 0.003% CPU.
 ```
 
 ```rust
-pub fn adapt_to_power_state(&amp;self) {
+pub fn adapt_to_power_state(&self) {
     let on_battery = is_on_battery();
     let interval = if on_battery {
         Duration::from_secs(10)
@@ -2145,12 +2145,12 @@ pub fn adapt_to_power_state(&amp;self) {
 
 | **Operation** | **Target** |
 |---|---|
-| `capture_foreground` | &lt; 500μs |
-| `classify` | &lt; 50μs |
-| `sanitize` | &lt; 30μs |
-| Full tick | &lt; 1ms |
-| Mode transition emit | &lt; 100μs |
-| Sustained CPU usage | &lt; 0.3% |
+| `capture_foreground` | < 500μs |
+| `classify` | < 50μs |
+| `sanitize` | < 30μs |
+| Full tick | < 1ms |
+| Mode transition emit | < 100μs |
+| Sustained CPU usage | < 0.3% |
 
 ---
 
@@ -2182,16 +2182,16 @@ chiro-pet/
 │               │   ├── linux.rs       (stub)
 │               │   # **Chiro-Pet Desktop Awareness System**
 
-&gt; Tài liệu thiết kế chính thức cho **Desktop Awareness System** của **Chiro-Pet**.
-&gt; Hệ thống này là **giác quan** của app: quan sát desktop, phân loại ngữ cảnh, phát hiện mode, sanitize dữ liệu nhạy cảm trước khi đưa vào AI context.
-&gt;
-&gt; **Nguyên tắc lõi:** Desktop Awareness **quan sát thụ động**, không can thiệp OS, không đọc nội dung file, không screenshot, không log keystroke. Mọi dữ liệu thô đều đi qua **Sanitizer** trước khi rời module. Subsystem khác chỉ nhận **classified context** đã được làm sạch.
+> Tài liệu thiết kế chính thức cho **Desktop Awareness System** của **Chiro-Pet**.
+> Hệ thống này là **giác quan** của app: quan sát desktop, phân loại ngữ cảnh, phát hiện mode, sanitize dữ liệu nhạy cảm trước khi đưa vào AI context.
+>
+> **Nguyên tắc lõi:** Desktop Awareness **quan sát thụ động**, không can thiệp OS, không đọc nội dung file, không screenshot, không log keystroke. Mọi dữ liệu thô đều đi qua **Sanitizer** trước khi rời module. Subsystem khác chỉ nhận **classified context** đã được làm sạch.
 
 ---
 
 ## **Mục lục**
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Awareness Layers](#3-awareness-layers)
 4. [Data Model](#4-data-model)
@@ -2211,7 +2211,7 @@ chiro-pet/
 18. [Platform Adapter (Windows)](#18-platform-adapter-windows)
 19. [IPC Contract](#19-ipc-contract)
 20. [Frontend Integration](#20-frontend-integration)
-21. [Logging &amp; Audit](#21-logging--audit)
+21. [Logging & Audit](#21-logging--audit)
 22. [Error Handling](#22-error-handling)
 23. [Performance Considerations](#23-performance-considerations)
 24. [File Structure](#24-file-structure)
@@ -2223,7 +2223,7 @@ chiro-pet/
 
 ---
 
-## **1. Mục tiêu &amp; Phạm vi**
+## **1. Mục tiêu & Phạm vi**
 
 ### **1.1. Mục tiêu**
 
@@ -2237,7 +2237,7 @@ Desktop Awareness System của **Chiro-Pet** phải:
 - **Sanitize** mọi dữ liệu thô trước khi expose ra AI hoặc subsystem khác.
 - Emit **mode change events** để các subsystem khác react.
 - Hỗ trợ **multi-monitor** (biết overlay đang ở monitor nào).
-- **Không tốn CPU** (target &lt; 0.5% CPU usage).
+- **Không tốn CPU** (target < 0.5% CPU usage).
 - Tôn trọng **Private Mode** (dừng polling hoặc giảm scope).
 
 ### **1.2. Phạm vi**
@@ -2590,7 +2590,7 @@ DROP raw reading (do not persist)
 ### **5.3. Process name extraction**
 
 ```rust
-pub(crate) fn extract_process_name(path: &amp;str) -&gt; Option<string> {
+pub(crate) fn extract_process_name(path: &str) -> Option<string> {
     Path::new(path)
         .file_name()
         .and_then(|s| s.to_str())
@@ -2615,7 +2615,7 @@ pub(crate) fn extract_process_name(path: &amp;str) -&gt; Option<string> {
 ### **6.1. Win32 API**
 
 ```text
-- GetLastInputInfo(&amp;LASTINPUTINFO) → ticks
+- GetLastInputInfo(&LASTINPUTINFO) → ticks
 - GetTickCount() → current ticks
 - idle_ms = current_ticks - last_input_ticks
 ```
@@ -2624,20 +2624,20 @@ pub(crate) fn extract_process_name(path: &amp;str) -&gt; Option<string> {
 
 | **Threshold** | **Giá trị** | **Mode trigger** |
 |---|---|---|
-| **Active** | &lt; 60s | Normal/Focus |
+| **Active** | < 60s | Normal/Focus |
 | **Short idle** | 60s - 5min | Stay in current |
 | **Medium idle** | 5min - 15min | Hint toward Idle |
-| **Long idle** | &gt; 15min | Transition to Idle |
+| **Long idle** | > 15min | Transition to Idle |
 
 ### **6.3. Activity level computation**
 
 ```rust
-pub fn compute_activity_level(idle_seconds: u64) -&gt; ActivityLevel {
+pub fn compute_activity_level(idle_seconds: u64) -> ActivityLevel {
     match idle_seconds {
-        0..=10 =&gt; ActivityLevel::High,
-        11..=60 =&gt; ActivityLevel::Medium,
-        61..=300 =&gt; ActivityLevel::Low,
-        _ =&gt; ActivityLevel::Idle,
+        0..=10 => ActivityLevel::High,
+        11..=60 => ActivityLevel::Medium,
+        61..=300 => ActivityLevel::Low,
+        _ => ActivityLevel::Idle,
     }
 }
 ```
@@ -2658,16 +2658,16 @@ pub fn compute_activity_level(idle_seconds: u64) -&gt; ActivityLevel {
 ### **7.1. Detection logic**
 
 ```rust
-pub fn is_window_fullscreen(hwnd: HWND, monitor_rect: RECT) -&gt; bool {
+pub fn is_window_fullscreen(hwnd: HWND, monitor_rect: RECT) -> bool {
     let mut window_rect = RECT::default();
-    if unsafe { GetWindowRect(hwnd, &amp;mut window_rect) }.is_err() {
+    if unsafe { GetWindowRect(hwnd, &mut window_rect) }.is_err() {
         return false;
     }
 
     window_rect.left == monitor_rect.left
-        &amp;&amp; window_rect.top == monitor_rect.top
-        &amp;&amp; window_rect.right == monitor_rect.right
-        &amp;&amp; window_rect.bottom == monitor_rect.bottom
+        && window_rect.top == monitor_rect.top
+        && window_rect.right == monitor_rect.right
+        && window_rect.bottom == monitor_rect.bottom
 }
 ```
 
@@ -2724,24 +2724,24 @@ pub struct AppClassifier {
 }
 
 impl AppClassifier {
-    pub fn classify(&amp;self, raw: &amp;RawSensorReading) -&gt; (AppCategory, f32) {
-        let process_name = match &amp;raw.foreground_process_name {
-            Some(n) =&gt; n.to_lowercase(),
-            None =&gt; return (AppCategory::Unknown, 0.0),
+    pub fn classify(&self, raw: &RawSensorReading) -> (AppCategory, f32) {
+        let process_name = match &raw.foreground_process_name {
+            Some(n) => n.to_lowercase(),
+            None => return (AppCategory::Unknown, 0.0),
         };
 
         // 1. Exact match
-        if let Some(cat) = self.registry.exact_match(&amp;process_name) {
+        if let Some(cat) = self.registry.exact_match(&process_name) {
             return (cat, 1.0);
         }
 
         // 2. Substring match
-        if let Some(cat) = self.registry.substring_match(&amp;process_name) {
+        if let Some(cat) = self.registry.substring_match(&process_name) {
             return (cat, 0.8);
         }
 
         // 3. Path-based heuristic
-        if let Some(path) = &amp;raw.foreground_path {
+        if let Some(path) = &raw.foreground_path {
             if let Some(cat) = self.registry.path_hint(path) {
                 return (cat, 0.5);
             }
@@ -2785,7 +2785,7 @@ impl AppClassifier {
 | **Gaming** | Fullscreen + Game category | Minimal | None |
 | **Meeting** | Communication + active (camera/mic indicator) | Minimal | None |
 | **Watching** | Fullscreen + Media/Browser video | Minimal | None |
-| **Idle** | idle_seconds &gt; 15min | Suspended | None |
+| **Idle** | idle_seconds > 15min | Suspended | None |
 | **Private** | User toggle | Suspended | None |
 
 ### **9.2. State machine diagram**
@@ -2817,7 +2817,7 @@ impl AppClassifier {
 ```text
 Normal → Focus
   Condition: app_category in {DeveloperTool, Office, Design}
-             AND session_duration &gt;= 30min
+             AND session_duration >= 30min
              AND no fullscreen
   Hysteresis: 60s
 
@@ -2836,7 +2836,7 @@ Normal → Watching
   Hysteresis: 20s
 
 Any → Idle
-  Condition: idle_seconds &gt; 15min
+  Condition: idle_seconds > 15min
   Hysteresis: immediate (no debounce)
 
 Any → Private
@@ -2852,7 +2852,7 @@ Private → Normal
   Hysteresis: immediate
 
 Focus → Normal
-  Condition: app_category changed for &gt; 60s
+  Condition: app_category changed for > 60s
   Hysteresis: 60s
 ```
 
@@ -2862,37 +2862,37 @@ Focus → Normal
 pub struct ModeHysteresis {
     candidate_mode: Option<appmode>,
     candidate_since: Option<instant>,
-    required_duration: HashMap&lt;(AppMode, AppMode), Duration&gt;,
+    required_duration: HashMap<(AppMode, AppMode), Duration>,
 }
 
 impl ModeHysteresis {
     pub fn evaluate(
-        &amp;mut self,
+        &mut self,
         current: AppMode,
         proposed: AppMode,
         now: Instant,
-    ) -&gt; Option<appmode> {
+    ) -> Option<appmode> {
         if proposed == current {
             self.candidate_mode = None;
             return None;
         }
 
         let required = self.required_duration
-            .get(&amp;(current, proposed))
+            .get(&(current, proposed))
             .copied()
             .unwrap_or(Duration::from_secs(30));
 
         match self.candidate_mode {
-            Some(c) if c == proposed =&gt; {
+            Some(c) if c == proposed => {
                 let since = self.candidate_since.unwrap();
-                if now.duration_since(since) &gt;= required {
+                if now.duration_since(since) >= required {
                     self.candidate_mode = None;
                     Some(proposed)
                 } else {
                     None
                 }
             }
-            _ =&gt; {
+            _ => {
                 self.candidate_mode = Some(proposed);
                 self.candidate_since = Some(now);
                 None
@@ -2918,12 +2918,12 @@ pub struct ContextClassifier {
 }
 
 impl ContextClassifier {
-    pub fn classify(&amp;mut self, raw: &amp;RawSensorReading) -&gt; ClassificationOutput {
+    pub fn classify(&mut self, raw: &RawSensorReading) -> ClassificationOutput {
         // 1. App category
         let (category, confidence) = self.app_classifier.classify(raw);
 
         // 2. Session tracking
-        let session_duration = self.session_tracker.track(&amp;category, raw.captured_at);
+        let session_duration = self.session_tracker.track(&category, raw.captured_at);
 
         // 3. Activity level
         let idle_seconds = (raw.captured_at.timestamp_millis() as u64)
@@ -2969,17 +2969,17 @@ Session = thời gian liên tục cùng app category.
 ```rust
 pub struct SessionTracker {
     current_category: Option<appcategory>,
-    session_started_at: Option<datetime<utc>&gt;,
+    session_started_at: Option<datetime<utc>>,
 }
 
 impl SessionTracker {
-    pub fn track(&amp;mut self, category: &amp;AppCategory, now: DateTime<utc>) -&gt; u64 {
+    pub fn track(&mut self, category: &AppCategory, now: DateTime<utc>) -> u64 {
         match self.current_category {
-            Some(c) if c == *category =&gt; {
+            Some(c) if c == *category => {
                 let started = self.session_started_at.unwrap();
                 (now - started).num_seconds().max(0) as u64
             }
-            _ =&gt; {
+            _ => {
                 self.current_category = Some(*category);
                 self.session_started_at = Some(now);
                 0
@@ -2987,7 +2987,7 @@ impl SessionTracker {
         }
     }
 
-    pub fn reset(&amp;mut self) {
+    pub fn reset(&mut self) {
         self.current_category = None;
         self.session_started_at = None;
     }
@@ -3001,22 +3001,22 @@ pub struct ModeEvaluator;
 
 impl ModeEvaluator {
     pub fn propose(
-        &amp;self,
+        &self,
         category: AppCategory,
         is_fullscreen: bool,
         session_seconds: u64,
         idle_seconds: u64,
-    ) -&gt; AppMode {
-        if idle_seconds &gt; 900 {
+    ) -> AppMode {
+        if idle_seconds > 900 {
             return AppMode::Idle;
         }
 
         if is_fullscreen {
             return match category {
-                AppCategory::Game =&gt; AppMode::Gaming,
-                AppCategory::Media =&gt; AppMode::Watching,
-                AppCategory::Communication =&gt; AppMode::Meeting,
-                _ =&gt; AppMode::Focus,
+                AppCategory::Game => AppMode::Gaming,
+                AppCategory::Media => AppMode::Watching,
+                AppCategory::Communication => AppMode::Meeting,
+                _ => AppMode::Focus,
             };
         }
 
@@ -3027,7 +3027,7 @@ impl ModeEvaluator {
         if matches!(
             category,
             AppCategory::DeveloperTool | AppCategory::Office | AppCategory::Design
-        ) &amp;&amp; session_seconds &gt;= 1800 {
+        ) && session_seconds >= 1800 {
             return AppMode::Focus;
         }
 
@@ -3060,11 +3060,11 @@ pub struct ContextSanitizer;
 
 impl ContextSanitizer {
     pub fn sanitize(
-        &amp;self,
-        classified: &amp;ClassifiedContext,
+        &self,
+        classified: &ClassifiedContext,
         mode: AppMode,
-        privacy_settings: &amp;PrivacySettings,
-    ) -&gt; Option<sanitizeddesktopcontext> {
+        privacy_settings: &PrivacySettings,
+    ) -> Option<sanitizeddesktopcontext> {
         // Private mode: return None (no context to AI)
         if privacy_settings.private_mode {
             return None;
@@ -3100,18 +3100,18 @@ impl ContextSanitizer {
     }
 }
 
-fn round_to_bucket(value: u64, bucket: u64) -&gt; u64 {
+fn round_to_bucket(value: u64, bucket: u64) -> u64 {
     (value / bucket) * bucket
 }
 
-fn compute_time_of_day(now: DateTime<local>) -&gt; TimeOfDay {
+fn compute_time_of_day(now: DateTime<local>) -> TimeOfDay {
     let hour = now.hour();
     match hour {
-        4..=7 =&gt; TimeOfDay::EarlyMorning,
-        8..=11 =&gt; TimeOfDay::Morning,
-        12..=17 =&gt; TimeOfDay::Afternoon,
-        18..=21 =&gt; TimeOfDay::Evening,
-        _ =&gt; TimeOfDay::Night,
+        4..=7 => TimeOfDay::EarlyMorning,
+        8..=11 => TimeOfDay::Morning,
+        12..=17 => TimeOfDay::Afternoon,
+        18..=21 => TimeOfDay::Evening,
+        _ => TimeOfDay::Night,
     }
 }
 ```
@@ -3133,10 +3133,10 @@ fn compute_time_of_day(now: DateTime<local>) -&gt; TimeOfDay {
 ### **12.1. Adaptive polling**
 
 ```text
-- Active (input &lt; 60s): poll every 2s
+- Active (input < 60s): poll every 2s
 - Short idle (60s-5min): poll every 5s
 - Medium idle (5min-15min): poll every 15s
-- Long idle (&gt; 15min): poll every 60s
+- Long idle (> 15min): poll every 60s
 - Fullscreen game/video: poll every 10s (giảm load)
 - Private mode: poll every 30s (chỉ check exit private)
 ```
@@ -3151,15 +3151,15 @@ pub struct AdaptivePoller {
 }
 
 impl AdaptivePoller {
-    pub fn next_interval(&amp;mut self, level: ActivityLevel, mode: AppMode) -&gt; Duration {
+    pub fn next_interval(&mut self, level: ActivityLevel, mode: AppMode) -> Duration {
         let interval = match (level, mode) {
-            (_, AppMode::Private) =&gt; Duration::from_secs(30),
-            (_, AppMode::Idle) =&gt; Duration::from_secs(60),
-            (_, AppMode::Gaming | AppMode::Watching) =&gt; Duration::from_secs(10),
-            (ActivityLevel::Idle, _) =&gt; Duration::from_secs(15),
-            (ActivityLevel::Low, _) =&gt; Duration::from_secs(5),
-            (ActivityLevel::Medium, _) =&gt; Duration::from_secs(3),
-            (ActivityLevel::High, _) =&gt; Duration::from_secs(2),
+            (_, AppMode::Private) => Duration::from_secs(30),
+            (_, AppMode::Idle) => Duration::from_secs(60),
+            (_, AppMode::Gaming | AppMode::Watching) => Duration::from_secs(10),
+            (ActivityLevel::Idle, _) => Duration::from_secs(15),
+            (ActivityLevel::Low, _) => Duration::from_secs(5),
+            (ActivityLevel::Medium, _) => Duration::from_secs(3),
+            (ActivityLevel::High, _) => Duration::from_secs(2),
         };
 
         self.current_interval = interval;
@@ -3179,11 +3179,11 @@ pub async fn run_awareness_loop(manager: Arc<awarenessmanager>) {
         let result = manager.tick().await;
 
         let next_interval = match result {
-            Ok(snapshot) =&gt; poller.next_interval(
+            Ok(snapshot) => poller.next_interval(
                 snapshot.activity_level,
                 snapshot.mode,
             ),
-            Err(e) =&gt; {
+            Err(e) => {
                 tracing::warn!("awareness tick failed: {}", e);
                 Duration::from_secs(10)
             }
@@ -3197,7 +3197,7 @@ pub async fn run_awareness_loop(manager: Arc<awarenessmanager>) {
 ### **12.4. CPU budget**
 
 ```text
-Target: &lt; 0.5% CPU on idle, &lt; 1% under active load.
+Target: < 0.5% CPU on idle, < 1% under active load.
 
 Measurement:
   - Win32 API calls per tick: ~5 (GetForegroundWindow, GetLastInputInfo, etc.)
@@ -3261,16 +3261,16 @@ pub struct AwarenessEventBus {
 }
 
 impl AwarenessEventBus {
-    pub fn new() -&gt; Self {
+    pub fn new() -> Self {
         let (sender, _) = broadcast::channel(128);
         Self { sender }
     }
 
-    pub fn subscribe(&amp;self) -&gt; broadcast::Receiver<awarenessevent> {
+    pub fn subscribe(&self) -> broadcast::Receiver<awarenessevent> {
         self.sender.subscribe()
     }
 
-    pub fn emit(&amp;self, event: AwarenessEvent) {
+    pub fn emit(&self, event: AwarenessEvent) {
         let _ = self.sender.send(event);
     }
 }
@@ -3437,33 +3437,33 @@ Khi overlay và foreground window cùng monitor:
 ```rust
 pub struct AppCategoryRegistry {
     exact: HashMap<string, appcategory="">,
-    substring: Vec&lt;(String, AppCategory)&gt;,
-    path_hints: Vec&lt;(String, AppCategory)&gt;,
+    substring: Vec<(String, AppCategory)>,
+    path_hints: Vec<(String, AppCategory)>,
 }
 
 impl AppCategoryRegistry {
-    pub fn load_from_file(path: &amp;Path) -&gt; Result<self> {
+    pub fn load_from_file(path: &Path) -> Result<self> {
         let content = std::fs::read_to_string(path)?;
-        let raw: serde_json::Value = serde_json::from_str(&amp;content)?;
+        let raw: serde_json::Value = serde_json::from_str(&content)?;
         // Parse and build maps
         Ok(Self {
-            exact: parse_exact(&amp;raw)?,
-            substring: parse_substring(&amp;raw)?,
-            path_hints: parse_path_hints(&amp;raw)?,
+            exact: parse_exact(&raw)?,
+            substring: parse_substring(&raw)?,
+            path_hints: parse_path_hints(&raw)?,
         })
     }
 
-    pub fn exact_match(&amp;self, process: &amp;str) -&gt; Option<appcategory> {
+    pub fn exact_match(&self, process: &str) -> Option<appcategory> {
         self.exact.get(process).copied()
     }
 
-    pub fn substring_match(&amp;self, process: &amp;str) -&gt; Option<appcategory> {
+    pub fn substring_match(&self, process: &str) -> Option<appcategory> {
         self.substring.iter()
             .find(|(pattern, _)| process.contains(pattern))
             .map(|(_, cat)| *cat)
     }
 
-    pub fn path_hint(&amp;self, path: &amp;str) -&gt; Option<appcategory> {
+    pub fn path_hint(&self, path: &str) -> Option<appcategory> {
         let lower = path.to_lowercase();
         self.path_hints.iter()
             .find(|(pattern, _)| lower.contains(pattern))
@@ -3538,13 +3538,13 @@ Exit (User toggles OFF):
 ```rust
 pub struct AwarenessManager {
     sensor: Arc<platformsensor>,
-    classifier: Arc<mutex<contextclassifier>&gt;,
+    classifier: Arc<mutex<contextclassifier>>,
     sanitizer: Arc<contextsanitizer>,
-    hysteresis: Arc<mutex<modehysteresis>&gt;,
-    poller: Arc<mutex<adaptivepoller>&gt;,
+    hysteresis: Arc<mutex<modehysteresis>>,
+    poller: Arc<mutex<adaptivepoller>>,
     event_bus: Arc<awarenesseventbus>,
-    current_state: Arc<rwlock<awarenessstate>&gt;,
-    privacy: Arc<rwlock<privacysettings>&gt;,
+    current_state: Arc<rwlock<awarenessstate>>,
+    privacy: Arc<rwlock<privacysettings>>,
     audit: Arc<awarenessauditlogger>,
 }
 
@@ -3553,7 +3553,7 @@ pub struct AwarenessState {
     pub current_mode: AppMode,
     pub last_classified: Option<classifiedcontext>,
     pub last_sanitized: Option<sanitizeddesktopcontext>,
-    pub last_milestone_at: HashMap<u32, datetime<utc="">&gt;,
+    pub last_milestone_at: HashMap<u32, datetime<utc="">>,
 }
 ```
 
@@ -3561,36 +3561,36 @@ pub struct AwarenessState {
 
 ```rust
 impl AwarenessManager {
-    pub async fn init(config: AwarenessConfig) -&gt; Result<self>;
+    pub async fn init(config: AwarenessConfig) -> Result<self>;
 
     // Lifecycle
-    pub async fn start(&amp;self) -&gt; Result&lt;()&gt;;
-    pub async fn stop(&amp;self) -&gt; Result&lt;()&gt;;
+    pub async fn start(&self) -> Result<()>;
+    pub async fn stop(&self) -> Result<()>;
 
     // Core tick
-    pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot>;
+    pub async fn tick(&self) -> Result<awarenesssnapshot>;
 
     // Read API
-    pub async fn current_mode(&amp;self) -&gt; AppMode;
-    pub async fn current_snapshot(&amp;self) -&gt; AwarenessSnapshot;
-    pub async fn sanitized_context(&amp;self) -&gt; Option<sanitizeddesktopcontext>;
+    pub async fn current_mode(&self) -> AppMode;
+    pub async fn current_snapshot(&self) -> AwarenessSnapshot;
+    pub async fn sanitized_context(&self) -> Option<sanitizeddesktopcontext>;
 
     // Privacy
-    pub async fn set_private_mode(&amp;self, enabled: bool) -&gt; Result&lt;()&gt;;
-    pub async fn update_privacy_settings(&amp;self, settings: PrivacySettings) -&gt; Result&lt;()&gt;;
+    pub async fn set_private_mode(&self, enabled: bool) -> Result<()>;
+    pub async fn update_privacy_settings(&self, settings: PrivacySettings) -> Result<()>;
 
     // Subscription
-    pub fn subscribe_events(&amp;self) -&gt; broadcast::Receiver<awarenessevent>;
+    pub fn subscribe_events(&self) -> broadcast::Receiver<awarenessevent>;
 
     // Debug
-    pub async fn dump_debug(&amp;self) -&gt; Result<awarenessdebugdump>;
+    pub async fn dump_debug(&self) -> Result<awarenessdebugdump>;
 }
 ```
 
 ### **17.3. Main tick flow**
 
 ```rust
-pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot> {
+pub async fn tick(&self) -> Result<awarenesssnapshot> {
     let privacy = self.privacy.read().await.clone();
 
     // 1. Read raw sensors
@@ -3598,7 +3598,7 @@ pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot> {
 
     // 2. Classify
     let mut classifier = self.classifier.lock().await;
-    let classification = classifier.classify(&amp;raw);
+    let classification = classifier.classify(&raw);
     drop(classifier);
 
     // 3. Mode hysteresis
@@ -3615,9 +3615,9 @@ pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot> {
 
     // 4. Sanitize
     let sanitized = self.sanitizer.sanitize(
-        &amp;classification.classified,
+        &classification.classified,
         effective_mode,
-        &amp;privacy,
+        &privacy,
     );
 
     // 5. Update state
@@ -3652,7 +3652,7 @@ pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot> {
     }
 
     // 7. Check session milestones
-    self.check_session_milestones(&amp;classification.classified).await;
+    self.check_session_milestones(&classification.classified).await;
 
     // 8. Build snapshot
     Ok(AwarenessSnapshot {
@@ -3671,16 +3671,16 @@ pub async fn tick(&amp;self) -&gt; Result<awarenesssnapshot> {
 ### **17.4. Session milestone check**
 
 ```rust
-async fn check_session_milestones(&amp;self, classified: &amp;ClassifiedContext) {
+async fn check_session_milestones(&self, classified: &ClassifiedContext) {
     let minutes = (classified.session_duration_seconds / 60) as u32;
     let milestones = [45u32, 90, 120, 180, 240];
 
     let mut state = self.current_state.write().await;
-    for &amp;milestone in &amp;milestones {
-        if minutes &gt;= milestone {
+    for &milestone in &milestones {
+        if minutes >= milestone {
             let already_emitted = state.last_milestone_at
-                .get(&amp;milestone)
-                .map(|t| (Utc::now() - *t).num_minutes() &lt; 60)
+                .get(&milestone)
+                .map(|t| (Utc::now() - *t).num_minutes() < 60)
                 .unwrap_or(false);
 
             if !already_emitted {
@@ -3705,9 +3705,9 @@ async fn check_session_milestones(&amp;self, classified: &amp;ClassifiedContext)
 ```rust
 #[async_trait::async_trait]
 pub trait PlatformSensor: Send + Sync {
-    async fn read(&amp;self) -&gt; Result<rawsensorreading>;
-    async fn list_monitors(&amp;self) -&gt; Result<vec<monitorinfo>&gt;;
-    async fn supports_fullscreen_detection(&amp;self) -&gt; bool;
+    async fn read(&self) -> Result<rawsensorreading>;
+    async fn list_monitors(&self) -> Result<vec<monitorinfo>>;
+    async fn supports_fullscreen_detection(&self) -> bool;
 }
 ```
 
@@ -3715,12 +3715,12 @@ pub trait PlatformSensor: Send + Sync {
 
 ```rust
 pub struct WindowsSensor {
-    process_name_cache: Mutex<lrucache<u32, string="">&gt;,
+    process_name_cache: Mutex<lrucache<u32, string="">>,
 }
 
 #[async_trait::async_trait]
 impl PlatformSensor for WindowsSensor {
-    async fn read(&amp;self) -&gt; Result<rawsensorreading> {
+    async fn read(&self) -> Result<rawsensorreading> {
         tokio::task::spawn_blocking(|| {
             let hwnd = unsafe { GetForegroundWindow() };
             if hwnd.0 == 0 {
@@ -3728,7 +3728,7 @@ impl PlatformSensor for WindowsSensor {
             }
 
             let mut pid: u32 = 0;
-            unsafe { GetWindowThreadProcessId(hwnd, Some(&amp;mut pid)); }
+            unsafe { GetWindowThreadProcessId(hwnd, Some(&mut pid)); }
 
             let process_name = get_process_name(pid).ok();
             let path = get_process_path(pid).ok();
@@ -3750,13 +3750,13 @@ impl PlatformSensor for WindowsSensor {
         }).await?
     }
 
-    async fn list_monitors(&amp;self) -&gt; Result<vec<monitorinfo>&gt; {
+    async fn list_monitors(&self) -> Result<vec<monitorinfo>> {
         tokio::task::spawn_blocking(|| {
             enumerate_monitors()
         }).await?
     }
 
-    async fn supports_fullscreen_detection(&amp;self) -&gt; bool {
+    async fn supports_fullscreen_detection(&self) -> bool {
         true
     }
 }
@@ -3765,13 +3765,13 @@ impl PlatformSensor for WindowsSensor {
 ### **18.3. Win32 helpers**
 
 ```rust
-fn get_last_input_time_ms() -&gt; Result<u64> {
+fn get_last_input_time_ms() -> Result<u64> {
     let mut lii = LASTINPUTINFO {
         cbSize: std::mem::size_of::<lastinputinfo>() as u32,
         dwTime: 0,
     };
 
-    let success = unsafe { GetLastInputInfo(&amp;mut lii) };
+    let success = unsafe { GetLastInputInfo(&mut lii) };
     if !success.as_bool() {
         return Err(anyhow!("GetLastInputInfo failed"));
     }
@@ -3783,26 +3783,26 @@ fn get_last_input_time_ms() -&gt; Result<u64> {
     Ok(now_ms.saturating_sub(idle_ms))
 }
 
-fn check_fullscreen(hwnd: HWND) -&gt; Result<bool> {
+fn check_fullscreen(hwnd: HWND) -> Result<bool> {
     let monitor = unsafe { MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) };
     let mut mi = MONITORINFO {
         cbSize: std::mem::size_of::<monitorinfo>() as u32,
         ..Default::default()
     };
 
-    if !unsafe { GetMonitorInfoW(monitor, &amp;mut mi) }.as_bool() {
+    if !unsafe { GetMonitorInfoW(monitor, &mut mi) }.as_bool() {
         return Ok(false);
     }
 
     let mut window_rect = RECT::default();
-    if unsafe { GetWindowRect(hwnd, &amp;mut window_rect) }.is_err() {
+    if unsafe { GetWindowRect(hwnd, &mut window_rect) }.is_err() {
         return Ok(false);
     }
 
     Ok(window_rect.left == mi.rcMonitor.left
-        &amp;&amp; window_rect.top == mi.rcMonitor.top
-        &amp;&amp; window_rect.right == mi.rcMonitor.right
-        &amp;&amp; window_rect.bottom == mi.rcMonitor.bottom)
+        && window_rect.top == mi.rcMonitor.top
+        && window_rect.right == mi.rcMonitor.right
+        && window_rect.bottom == mi.rcMonitor.bottom)
 }
 ```
 
@@ -3892,47 +3892,47 @@ interface AwarenessStore {
   snapshot: AwarenessSnapshot | null;
   privateMode: boolean;
 
-  refresh: () =&gt; Promise<void>;
-  togglePrivateMode: () =&gt; Promise<void>;
+  refresh: () => Promise<void>;
+  togglePrivateMode: () => Promise<void>;
 
-  onModeChanged: (event: ModeChangedEvent) =&gt; void;
-  onFullscreenEntered: (category: AppCategory) =&gt; void;
-  onFullscreenExited: () =&gt; void;
-  onSessionMilestone: (event: SessionMilestoneEvent) =&gt; void;
+  onModeChanged: (event: ModeChangedEvent) => void;
+  onFullscreenEntered: (category: AppCategory) => void;
+  onFullscreenExited: () => void;
+  onSessionMilestone: (event: SessionMilestoneEvent) => void;
 }
 
-export const useAwarenessStore = create<awarenessstore>((set, get) =&gt; ({
+export const useAwarenessStore = create<awarenessstore>((set, get) => ({
   snapshot: null,
   privateMode: false,
 
-  refresh: async () =&gt; {
+  refresh: async () => {
     const snapshot = await invoke<awarenesssnapshot>("awareness_get_snapshot");
     set({ snapshot });
   },
 
-  togglePrivateMode: async () =&gt; {
+  togglePrivateMode: async () => {
     const next = !get().privateMode;
     await invoke("awareness_set_private_mode", { enabled: next });
     set({ privateMode: next });
   },
 
-  onModeChanged: (event) =&gt; {
-    set((state) =&gt; ({
+  onModeChanged: (event) => {
+    set((state) => ({
       snapshot: state.snapshot
         ? { ...state.snapshot, current_mode: event.to }
         : null,
     }));
   },
 
-  onFullscreenEntered: (category) =&gt; {
+  onFullscreenEntered: (category) => {
     console.log("fullscreen entered", category);
   },
 
-  onFullscreenExited: () =&gt; {
+  onFullscreenExited: () => {
     console.log("fullscreen exited");
   },
 
-  onSessionMilestone: (event) =&gt; {
+  onSessionMilestone: (event) => {
     console.log("session milestone", event);
   },
 }));
@@ -3942,24 +3942,24 @@ export const useAwarenessStore = create<awarenessstore>((set, get) =&gt; ({
 
 ```typescript
 export async function setupAwarenessListeners() {
-  await listen<modechangedevent>("awareness_mode_changed", (event) =&gt; {
+  await listen<modechangedevent>("awareness_mode_changed", (event) => {
     useAwarenessStore.getState().onModeChanged(event.payload);
   });
 
-  await listen&lt;{ category: AppCategory; at: string }&gt;(
+  await listen<{ category: AppCategory; at: string }>(
     "awareness_fullscreen_entered",
-    (event) =&gt; {
+    (event) => {
       useAwarenessStore.getState().onFullscreenEntered(event.payload.category);
     }
   );
 
-  await listen("awareness_fullscreen_exited", () =&gt; {
+  await listen("awareness_fullscreen_exited", () => {
     useAwarenessStore.getState().onFullscreenExited();
   });
 
   await listen<sessionmilestoneevent>(
     "awareness_session_milestone",
-    (event) =&gt; {
+    (event) => {
       useAwarenessStore.getState().onSessionMilestone(event.payload);
     }
   );
@@ -3977,7 +3977,7 @@ export async function setupAwarenessListeners() {
 
 ---
 
-## **21. Logging &amp; Audit**
+## **21. Logging & Audit**
 
 ### **21.1. Audit log schema**
 
@@ -4002,7 +4002,7 @@ CREATE INDEX idx_awareness_audit_created ON awareness_audit_log(created_at);
 | **TRACE** | Mỗi tick (only if debug flag) |
 | **DEBUG** | Classification result |
 | **INFO** | Mode change, session milestone, private mode toggle |
-| **WARN** | Sensor read fail, classifier confidence &lt; 0.3 |
+| **WARN** | Sensor read fail, classifier confidence < 0.3 |
 | **ERROR** | Platform adapter crash, registry load fail |
 
 ### **21.3. Privacy**
@@ -4077,7 +4077,7 @@ On app start:
 ### **23.1. CPU budget**
 
 ```text
-Target: &lt; 0.5% CPU idle, &lt; 1% active.
+Target: < 0.5% CPU idle, < 1% active.
 
 Optimizations:
   - Adaptive polling (giảm tần suất khi idle).
@@ -4100,16 +4100,16 @@ Optimizations:
 
 | **Operation** | **Target** |
 |---|---|
-| `sensor.read()` | &lt; 5ms |
-| `classifier.classify()` | &lt; 100μs |
-| `sanitizer.sanitize()` | &lt; 50μs |
-| Full tick | &lt; 10ms |
-| Event emit | &lt; 50μs |
+| `sensor.read()` | < 5ms |
+| `classifier.classify()` | < 100μs |
+| `sanitizer.sanitize()` | < 50μs |
+| Full tick | < 10ms |
+| Event emit | < 50μs |
 
 ### **23.4. Battery considerations**
 
 ```text
-- Trên laptop: tăng poll interval khi battery &lt; 20%.
+- Trên laptop: tăng poll interval khi battery < 20%.
 - Pause polling khi system suspend.
 - Resume khi WM_POWERBROADCAST resume event.
 ```
@@ -4321,7 +4321,7 @@ User opens VS Code, starts coding
 Tick 1 (t=0):
   category = developer_tool
   session = 0s
-  proposed = Normal (session &lt; 30min)
+  proposed = Normal (session < 30min)
   effective = Normal
        ↓
 ... (continued coding for 30 minutes) ...
@@ -4329,7 +4329,7 @@ Tick 1 (t=0):
 Tick N (t=30min):
   category = developer_tool
   session = 1800s
-  proposed = Focus (session &gt;= 30min)
+  proposed = Focus (session >= 30min)
        ↓
 ModeHysteresis:
   candidate = Focus
@@ -4342,7 +4342,7 @@ effective = Normal (still)
 Tick N+1 (t=30min + 60s):
   proposed = Focus
   candidate = Focus (still)
-  elapsed = 60s &gt;= 60s required
+  elapsed = 60s >= 60s required
   → return Some(Focus)
        ↓
 effective = Focus
