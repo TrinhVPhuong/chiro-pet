@@ -44,7 +44,9 @@ export interface AnimationSection {
 
 export interface AnimationManifestEntry {
     id: string;
-    file: string;
+    file?: string;
+    files?: string[];
+    playback_type?: 'single' | 'random' | 'sequence';
     states: AnimationState[];
     priority: number;
     loop_anim: boolean;

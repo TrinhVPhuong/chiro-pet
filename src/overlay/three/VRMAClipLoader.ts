@@ -18,12 +18,14 @@ export class VRMAClipLoader {
     public async load(url: string, vrm: VRM): Promise<THREE.AnimationClip | null> {
         if (url.endsWith('.vrma')) {
             try {
+                // Ensure correct URL formatting for Tauri custom protocol if needed
+                // For now, assume url is a valid asset path
                 const gltf = await this.gltfLoader.loadAsync(url);
                 const vrmAnimation = gltf.userData.vrmAnimations[0];
                 return createVRMAnimationClip(vrmAnimation, vrm);
             } catch (error) {
                 console.error(`Failed to load VRMA from ${url}`, error);
-                return this.createMockClip();
+                return null; // Return null so the caller can trigger a fallback
             }
         } else {
             // Fallback for .bvh or other formats currently not fully supported for VRM

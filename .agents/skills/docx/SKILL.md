@@ -427,7 +427,7 @@ Edit files in `unpacked/word/`. See XML Reference below for patterns.
 
 **Adding comments:** Use `comment.py` to handle boilerplate across multiple XML files (text must be pre-escaped XML):
 ```bash
-python scripts/comment.py unpacked/ 0 "Comment text with &amp; and &#x2019;"
+python scripts/comment.py unpacked/ 0 "Comment text with & and &#x2019;"
 python scripts/comment.py unpacked/ 1 "Reply text" --parent 0  # reply to comment 0
 python scripts/comment.py unpacked/ 0 "Text" --author "Custom Author"  # custom author name
 ```

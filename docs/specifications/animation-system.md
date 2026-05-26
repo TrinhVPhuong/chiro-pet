@@ -8,14 +8,14 @@
 
 ## Mục lục
 
-1. [Mục tiêu &amp; Phạm vi](#1-mục-tiêu--phạm-vi)
+1. [Mục tiêu & Phạm vi](#1-mục-tiêu--phạm-vi)
 2. [Nguyên tắc thiết kế](#2-nguyên-tắc-thiết-kế)
 3. [Kiến trúc tổng thể](#3-kiến-trúc-tổng-thể)
 4. [Animation State Model](#4-animation-state-model)
 5. [Animation Manifest](#5-animation-manifest)
 6. [Animation Command Contract](#6-animation-command-contract)
-7. [Priority &amp; Interrupt Policy](#7-priority--interrupt-policy)
-8. [Context ID &amp; Concurrency](#8-context-id--concurrency)
+7. [Priority & Interrupt Policy](#7-priority--interrupt-policy)
+8. [Context ID & Concurrency](#8-context-id--concurrency)
 9. [Intro / Loop / Outro Sectioning](#9-intro--loop--outro-sectioning)
 10. [Layering System](#10-layering-system)
 11. [Backend: AnimationDirector (Rust)](#11-backend-animationdirector-rust)
@@ -23,15 +23,15 @@
 13. [IPC Contract](#13-ipc-contract)
 14. [AI Integration](#14-ai-integration)
 15. [Talking Duration Estimation](#15-talking-duration-estimation)
-16. [Fallback &amp; Recovery](#16-fallback--recovery)
-17. [Format &amp; Asset Pipeline](#17-format--asset-pipeline)
+16. [Fallback & Recovery](#16-fallback--recovery)
+17. [Format & Asset Pipeline](#17-format--asset-pipeline)
 18. [File Structure](#18-file-structure)
 19. [Implementation Checklist](#19-implementation-checklist)
 20. [Glossary](#20-glossary)
 
 ---
 
-## 1. Mục tiêu &amp; Phạm vi
+## 1. Mục tiêu & Phạm vi
 
 ### 1.1. Mục tiêu
 
@@ -59,7 +59,7 @@ Tài liệu này **KHÔNG bao quát**:
 
 - Custom shader (xem `docs/shader-system.md`).
 - AI orchestration tổng thể (xem `docs/ai-system.md`).
-- Memory &amp; state persistence (xem `docs/state-system.md`).
+- Memory & state persistence (xem `docs/state-system.md`).
 
 ---
 
@@ -546,15 +546,15 @@ impl AnimationCommand {
     }
 
     pub fn thinking(context_id: String) -&gt; Self { /* ... */ }
-    pub fn talking(text: &amp;str, mood: Mood) -&gt; Self { /* ... */ }
+    pub fn talking(text: &str, mood: Mood) -&gt; Self { /* ... */ }
     pub fn drag_start() -&gt; Self { /* ... */ }
-    pub fn one_shot(animation_id: &amp;str) -&gt; Self { /* ... */ }
+    pub fn one_shot(animation_id: &str) -&gt; Self { /* ... */ }
 }
 ```
 
 ---
 
-## 7. Priority &amp; Interrupt Policy
+## 7. Priority & Interrupt Policy
 
 ### 7.1. Priority scale
 
@@ -586,16 +586,16 @@ impl AnimationCommand {
 ### 7.2. Interrupt logic
 
 ```rust
-pub fn can_interrupt(current: &amp;ActiveAnimation, next: &amp;AnimationCommand) -&gt; bool {
+pub fn can_interrupt(current: &ActiveAnimation, next: &AnimationCommand) -&gt; bool {
     // 1. Cùng context → luôn cho phép (replace trong context)
-    if let Some(next_ctx) = &amp;next.context_id {
+    if let Some(next_ctx) = &next.context_id {
         if current.context_id.as_ref() == Some(next_ctx) {
             return true;
         }
     }
 
     // 2. Current không interruptible → deny (trừ override hệ thống)
-    if !current.interruptible &amp;&amp; next.source != AnimationSource::System {
+    if !current.interruptible && next.source != AnimationSource::System {
         return false;
     }
 
@@ -622,7 +622,7 @@ pub fn can_interrupt(current: &amp;ActiveAnimation, next: &amp;AnimationCommand)
 
 ---
 
-## 8. Context ID &amp; Concurrency
+## 8. Context ID & Concurrency
 
 ### 8.1. Vai trò context_id
 
@@ -660,21 +660,21 @@ pub struct ActiveContext {
 }
 
 impl ContextRegistry {
-    pub fn upsert(&amp;mut self, cmd: &amp;AnimationCommand) {
-        if let Some(ctx_id) = &amp;cmd.context_id {
+    pub fn upsert(&mut self, cmd: &AnimationCommand) {
+        if let Some(ctx_id) = &cmd.context_id {
             self.active.insert(ctx_id.clone(), ActiveContext::from(cmd));
         }
     }
 
-    pub fn remove(&amp;mut self, ctx_id: &amp;str) -&gt; Option<activecontext> {
+    pub fn remove(&mut self, ctx_id: &str) -&gt; Option<activecontext> {
         self.active.remove(ctx_id)
     }
 
-    pub fn highest_priority(&amp;self) -&gt; Option&lt;&amp;ActiveContext&gt; {
+    pub fn highest_priority(&self) -&gt; Option&lt;&ActiveContext&gt; {
         self.active.values().max_by_key(|c| c.priority)
     }
 
-    pub fn is_empty(&amp;self) -&gt; bool {
+    pub fn is_empty(&self) -&gt; bool {
         self.active.is_empty()
     }
 }
@@ -860,15 +860,15 @@ impl AnimationDirector {
         }
     }
 
-    pub async fn play(&amp;self, app: &amp;AppHandle, cmd: AnimationCommand) -&gt; Result<playresult> {
+    pub async fn play(&self, app: &AppHandle, cmd: AnimationCommand) -&gt; Result<playresult> {
         let mut current = self.current.lock().await;
 
         // 1. Validate manifest
-        let resolved_id = self.resolve_animation_id(&amp;cmd)?;
+        let resolved_id = self.resolve_animation_id(&cmd)?;
 
         // 2. Check interrupt
         if let Some(active) = current.as_ref() {
-            if !self.can_interrupt(active, &amp;cmd) {
+            if !self.can_interrupt(active, &cmd) {
                 self.log_event(AnimationEvent::Rejected(cmd.clone())).await;
                 return Ok(PlayResult::Rejected);
             }
@@ -881,14 +881,14 @@ impl AnimationDirector {
 
         // 3. Update context registry
         let mut registry = self.context_registry.lock().await;
-        registry.upsert(&amp;cmd);
+        registry.upsert(&cmd);
         drop(registry);
 
         // 4. Emit command
         let mut final_cmd = cmd.clone();
         final_cmd.animation_id = Some(resolved_id);
 
-        app.emit("animation_command", &amp;final_cmd)
+        app.emit("animation_command", &final_cmd)
             .map_err(|e| AnimationError::EmitFailed(e.to_string()))?;
 
         // 5. Schedule fallback nếu có duration_ms
@@ -917,7 +917,7 @@ impl AnimationDirector {
         Ok(PlayResult::Accepted)
     }
 
-    pub async fn stop_context(&amp;self, app: &amp;AppHandle, context_id: &amp;str) -&gt; Result&lt;()&gt; {
+    pub async fn stop_context(&self, app: &AppHandle, context_id: &str) -&gt; Result&lt;()&gt; {
         let mut registry = self.context_registry.lock().await;
         registry.remove(context_id);
 
@@ -933,7 +933,7 @@ impl AnimationDirector {
         Ok(())
     }
 
-    pub async fn force_idle(&amp;self, app: &amp;AppHandle) -&gt; Result&lt;()&gt; {
+    pub async fn force_idle(&self, app: &AppHandle) -&gt; Result&lt;()&gt; {
         let mut registry = self.context_registry.lock().await;
         registry.clear();
         drop(registry);
@@ -942,9 +942,9 @@ impl AnimationDirector {
         Ok(())
     }
 
-    fn resolve_animation_id(&amp;self, cmd: &amp;AnimationCommand) -&gt; Result<string> {
+    fn resolve_animation_id(&self, cmd: &AnimationCommand) -&gt; Result<string> {
         // Nếu có animation_id explicit
-        if let Some(id) = &amp;cmd.animation_id {
+        if let Some(id) = &cmd.animation_id {
             if self.manifest.has(id) {
                 return Ok(id.clone());
             }
@@ -952,7 +952,7 @@ impl AnimationDirector {
         }
 
         // Resolve từ state
-        let candidates = self.manifest.find_by_state(&amp;cmd.state);
+        let candidates = self.manifest.find_by_state(&cmd.state);
         if candidates.is_empty() {
             return Err(AnimationError::NoAnimationForState(cmd.state.clone()));
         }
@@ -961,7 +961,7 @@ impl AnimationDirector {
         Ok(candidates[0].id.clone())
     }
 
-    fn can_interrupt(&amp;self, current: &amp;ActiveAnimation, next: &amp;AnimationCommand) -&gt; bool {
+    fn can_interrupt(&self, current: &ActiveAnimation, next: &AnimationCommand) -&gt; bool {
         // Logic ở section 7.2
         // ...
     }
@@ -977,7 +977,7 @@ pub async fn anim_play(
     director: tauri::State&lt;'_, AnimationDirector&gt;,
     app: tauri::AppHandle,
 ) -&gt; Result<playresult, string=""> {
-    director.play(&amp;app, cmd).await.map_err(|e| e.to_string())
+    director.play(&app, cmd).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -986,7 +986,7 @@ pub async fn anim_stop_context(
     director: tauri::State&lt;'_, AnimationDirector&gt;,
     app: tauri::AppHandle,
 ) -&gt; Result&lt;(), String&gt; {
-    director.stop_context(&amp;app, &amp;context_id).await.map_err(|e| e.to_string())
+    director.stop_context(&app, &context_id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -994,7 +994,7 @@ pub async fn anim_force_idle(
     director: tauri::State&lt;'_, AnimationDirector&gt;,
     app: tauri::AppHandle,
 ) -&gt; Result&lt;(), String&gt; {
-    director.force_idle(&amp;app).await.map_err(|e| e.to_string())
+    director.force_idle(&app).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -1094,7 +1094,7 @@ export class AnimationController {
       action.setLoop(THREE.LoopRepeat, Infinity);
     }
 
-    if (this.currentAction &amp;&amp; this.currentAction !== action) {
+    if (this.currentAction && this.currentAction !== action) {
       this.currentAction.fadeOut(fadeSec);
       action.fadeIn(fadeSec);
     }
@@ -1102,7 +1102,7 @@ export class AnimationController {
     action.play();
 
     // 3. Section logic nếu sectioned
-    if (manifestEntry.type === "sectioned" &amp;&amp; manifestEntry.sections) {
+    if (manifestEntry.type === "sectioned" && manifestEntry.sections) {
       this.currentSection = new SectionedPlayback(
         action,
         manifestEntry.sections,
@@ -1300,8 +1300,8 @@ Trong response JSON của AI:
 ```rust
 pub async fn handle_ai_response(
     response: AIResponse,
-    director: &amp;AnimationDirector,
-    app: &amp;AppHandle,
+    director: &AnimationDirector,
+    app: &AppHandle,
 ) -&gt; Result&lt;()&gt; {
     // 1. Validate suggested_animation tồn tại trong manifest
     let animation_id = response.suggested_animation
@@ -1320,7 +1320,7 @@ pub async fn handle_ai_response(
         loop_anim: Some(false),
         play_once: Some(false),
         crossfade_ms: Some(200),
-        duration_ms: Some(estimate_talking_duration_ms(&amp;response.message)),
+        duration_ms: Some(estimate_talking_duration_ms(&response.message)),
         priority: 60,
         context_id: Some(format!("ai_session_{}", response.session_id)),
         interrupt_policy: Some(InterruptPolicy::AllowHigher),
@@ -1348,8 +1348,8 @@ AI **chỉ đề xuất qua trường `suggested_animation` (animation_id)** tro
 
 ```rust
 fn validate_ai_animation_suggestion(
-    suggestion: Option&lt;&amp;str&gt;,
-    manifest: &amp;AnimationManifest,
+    suggestion: Option&lt;&str&gt;,
+    manifest: &AnimationManifest,
     expected_state: AnimationState,
 ) -&gt; Option<string> {
     let id = suggestion?;
@@ -1375,7 +1375,7 @@ fn validate_ai_animation_suggestion(
 ### 15.1. Công thức
 
 ```rust
-pub fn estimate_talking_duration_ms(text: &amp;str) -&gt; u32 {
+pub fn estimate_talking_duration_ms(text: &str) -&gt; u32 {
     let word_count = text.split_whitespace().count() as u32;
 
     // Tiếng Việt ~ 180 từ/phút (đọc thầm 200, đọc to 150-180)
@@ -1403,15 +1403,15 @@ pub fn estimate_talking_duration_ms(text: &amp;str) -&gt; u32 {
 Với câu dài, không nên giữ một animation talking suốt. Chia bubble:
 
 ```rust
-pub fn split_long_message(message: &amp;str, max_chunk_words: usize) -&gt; Vec<string> {
-    let sentences: Vec&lt;&amp;str&gt; = message.split(['.', '!', '?']).filter(|s| !s.trim().is_empty()).collect();
+pub fn split_long_message(message: &str, max_chunk_words: usize) -&gt; Vec<string> {
+    let sentences: Vec&lt;&str&gt; = message.split(['.', '!', '?']).filter(|s| !s.trim().is_empty()).collect();
     let mut chunks = Vec::new();
     let mut current = String::new();
     let mut word_count = 0;
 
     for sentence in sentences {
         let sw = sentence.split_whitespace().count();
-        if word_count + sw &gt; max_chunk_words &amp;&amp; !current.is_empty() {
+        if word_count + sw &gt; max_chunk_words && !current.is_empty() {
             chunks.push(current.trim().to_string());
             current = String::new();
             word_count = 0;
@@ -1431,7 +1431,7 @@ pub fn split_long_message(message: &amp;str, max_chunk_words: usize) -&gt; Vec<s
 
 ---
 
-## 16. Fallback &amp; Recovery
+## 16. Fallback & Recovery
 
 ### 16.1. Khi nào fallback trigger
 
@@ -1449,8 +1449,8 @@ pub fn split_long_message(message: &amp;str, max_chunk_words: usize) -&gt; Vec<s
 ```rust
 pub fn resolve_fallback(
     mode: FallbackMode,
-    previous: Option&lt;&amp;AnimationCommand&gt;,
-    context_registry: &amp;ContextRegistry,
+    previous: Option&lt;&AnimationCommand&gt;,
+    context_registry: &ContextRegistry,
 ) -&gt; AnimationCommand {
     match mode {
         FallbackMode::None =&gt; AnimationCommand::no_op(),
@@ -1490,7 +1490,7 @@ pub fn resolve_fallback(
 
 ---
 
-## 17. Format &amp; Asset Pipeline
+## 17. Format & Asset Pipeline
 
 ### 17.1. Runtime format
 
@@ -1653,14 +1653,14 @@ chiro-pet/
 - [ ] Talking duration estimation.
 - [ ] Long message bubble chunking.
 
-### 19.5. Manifest &amp; Assets (P1)
+### 19.5. Manifest & Assets (P1)
 
 - [ ] Soạn manifest đầy đủ cho 20+ animation core.
 - [ ] Convert hoặc tải về VRMA cho mỗi animation.
 - [ ] Test load tất cả clips.
 - [ ] Validate manifest schema khi load.
 
-### 19.6. Recovery &amp; Edge cases (P2)
+### 19.6. Recovery & Edge cases (P2)
 
 - [ ] Fallback resolution đầy đủ 3 mode.
 - [ ] Handle animation file missing → fallback idle + error event.
@@ -1708,7 +1708,7 @@ let cmd = AnimationCommand {
     state: AnimationState::Talking,
     animation_id: ai_response.suggested_animation,
     expression: ai_response.suggested_expression,
-    duration_ms: Some(estimate_talking_duration_ms(&amp;message)),
+    duration_ms: Some(estimate_talking_duration_ms(&message)),
     priority: 60,
     context_id: Some(format!("ai_session_{}", session_id)),
     fallback: Some(FallbackMode::Idle),

@@ -9,11 +9,20 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
 
-            // Setup Animation Director
-            let manifest_path = app.path().resource_dir().unwrap_or_default().join("public/animation/manifest.json");
+            // Initialize App Data Directory
+            let app_data_dir = core::fs_utils::init_app_data_dir(&app_handle)
+                .expect("Failed to initialize app data directory");
+
+            // Setup Animation Director using manifest from AppData if available, else fallback
+            let mut manifest_path = app_data_dir.join("animations").join("manifest.json");
+            if !manifest_path.exists() {
+                manifest_path = app.path().resource_dir().unwrap_or_default().join("public/animation/manifest.json");
+            }
+            
             let animation_director = core::behavior::AnimationDirector::new(manifest_path.to_str().unwrap_or(""))
                 .unwrap_or_else(|_| core::behavior::AnimationDirector::new_with_manifest(
                     core::behavior::AnimationManifest {
@@ -39,7 +48,9 @@ pub fn run() {
             commands::anim_play,
             commands::anim_stop_context,
             commands::anim_force_idle,
-            commands::anim_list_available
+            commands::anim_list_available,
+            commands::get_app_data_dir_path,
+            commands::open_app_data_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

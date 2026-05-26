@@ -4,7 +4,7 @@ Usage:
     python comment.py unpacked/ 0 "Comment text"
     python comment.py unpacked/ 1 "Reply text" --parent 0
 
-Text should be pre-escaped XML (e.g., &amp; for &, &#x2019; for smart quotes).
+Text should be pre-escaped XML (e.g., & for &, &#x2019; for smart quotes).
 
 After running, add markers to document.xml:
   <w:commentRangeStart w:id="0"/>

@@ -43,3 +43,40 @@ pub async fn anim_list_available(
     // Ideally we should add a method to AnimationDirector to return this
     Ok(vec![])
 }
+
+#[tauri::command]
+pub fn get_app_data_dir_path(app: tauri::AppHandle) -> Result<String, String> {
+    crate::core::fs_utils::get_app_data_dir(&app)
+        .map(|p| p.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn open_app_data_dir(app: tauri::AppHandle) -> Result<(), String> {
+    let dir = crate::core::fs_utils::get_app_data_dir(&app)?;
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    Ok(())
+}

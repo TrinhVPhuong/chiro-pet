@@ -1,20 +1,20 @@
 # Active Context: Chiro-Pet
 
 ## Current Work Focus
-The project is currently focused on consolidating its architectural foundation and preparing for the implementation of the **Animation Runtime** and **AI Chat & Voice System**. The structural refactor (decoupling React components and modularizing Rust backend) is complete.
+The project is currently focused on the integration of the **AI Chat & Voice System**, as the **Animation Runtime** (both Rust backend and Three.js frontend) has now been fully implemented and verified.
 
 ## Recent Changes
-- Extracted and analyzed documentation to build the Memory Bank.
-- Refactored `App.tsx` into decoupled components and hooks (`useVRMScene`, `useAltKeyTracking`, `useDrag`).
-- Modularized `lib.rs` into `commands.rs` and `input_tracking.rs`.
-- Optimized Cargo dependencies (limited `tokio` features) and NPM dependencies (moved dev tools).
-- Designed the new backend-driven Animation Runtime architecture.
+- Implemented `AnimationDirector` and `ContextRegistry` in Rust.
+- Built the `AnimationController` on the frontend with 4-Layer Blending (Base, Action, Procedural, Expression).
+- Implemented Procedural Breathing and Blinking logic.
+- Configured Tauri to automatically generate AppData directories (`animations`, `models`, `memory`, `config`) on startup to comply with OS standards for dynamic assets.
+- Integrated `tauri-plugin-fs` to securely read `manifest.json` and `.vrma` files from the AppData directory.
 
 ## Next Steps
-1. Implement the **Animation Director** in Rust.
-2. Build the **Context Registry** for priority-based animation queuing.
-3. Integrate the 4-Layer Blend mechanism into the Three.js client (`AnimationController`).
-4. Develop the AI Chat & Voice System integration.
+1. Develop the AI Chat & Voice System integration.
+2. Build the Proactivity Engine (calculating `proactivity_score`).
+3. Set up SQLite registry for complex asset/memory management.
+4. Finalize dynamic states (Mood, Energy, Affinity).
 
 ## Active Decisions and Considerations
 - **Backend-Driven State:** Rust dictates animation playback, maintaining a single source of truth to avoid race conditions.
@@ -22,5 +22,7 @@ The project is currently focused on consolidating its architectural foundation a
 - **Cross-Platform Readiness:** Maintain the `#[cfg(windows)]` abstraction layer in `input_tracking.rs` so the project can build on macOS/Linux without breaking.
 
 ## Recent Events (Sliding Window - Max 10)
-- **2026-05-26:** Memory Bank initialized to ensure persistent context across Cline sessions.
 - **2026-05-26:** Extracted Golden Master architecture from docs.
+- **2026-05-26:** Successfully implemented full End-to-End Animation Runtime (Rust -> React -> Three.js) with 4-Layer Blending and `.vrma` support.
+- **2026-05-26:** Transitioned file management to OS-standard AppData directory for dynamic assets.
+- **2026-05-26:** Refactored AnimationController for smoother Crossfades (Weight Blending), removed procedural breathing/blinking in favor of actual VRMA clips, and introduced Random/Sequence playback logic in `manifest.json`.

@@ -104,8 +104,10 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
         vrmRef.current = vrm;
 
         // Initialize Animation Controller
+        console.log("useVRMScene: initializing AnimationController...");
         animController = new AnimationController(vrm);
         animController.initialize().then(() => {
+          console.log("useVRMScene: AnimationController initialized successfully.");
           setModelLoaded(true);
           info('VRM Model & Animation Controller loaded successfully');
         }).catch(e => {

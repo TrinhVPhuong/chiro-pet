@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import type * as THREE from 'three';
 import type { VRM } from '@pixiv/three-vrm';
 import type { Position } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 import { playAnimation, stopAnimationContext } from '../services/animation';
 
 interface UseDragOptions {
@@ -35,15 +36,15 @@ export function useDrag({ vrmRef, cameraRef, isEnabled }: UseDragOptions) {
 
     // Trigger dragging animation
     playAnimation({
-      command_id: crypto.randomUUID(),
+      command_id: uuidv4(),
       source: 'user',
-      timestamp_ms: 0,
+      timestamp_ms: Date.now(),
       state: 'Dragging',
-      animation_id: null,
+      animation_id: 'drag_surprised',
       expression: 'surprised',
       loop_anim: true,
       play_once: false,
-      crossfade_ms: 100,
+      crossfade_ms: 100.0,
       duration_ms: null,
       priority: 95,
       context_id: 'dragging',

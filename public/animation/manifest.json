@@ -4,7 +4,11 @@
     "animations": [
         {
             "id": "idle_neutral_1",
-            "file": "bvh/neutral_idle.bvh",
+            "playback_type": "random",
+            "files": [
+                "vrma/VRMA_01.vrma",
+                "vrma/VRMA_02.vrma"
+            ],
             "states": [
                 "Idle",
                 "Listening"
@@ -19,20 +23,28 @@
         },
         {
             "id": "drag_surprised",
-            "file": "bvh/surprise.bvh",
+            "playback_type": "single",
+            "file": "vrma/VRMA_05.vrma",
             "states": [
-                "Dragging"
+                "Dragging",
+                "MenuOpen"
             ],
             "priority": 95,
             "loop_anim": true,
             "crossfade_ms": 100.0,
             "tags": [
-                "drag"
+                "drag",
+                "surprised",
+                "menu"
             ]
         },
         {
             "id": "talk_happy",
-            "file": "bvh/joy.bvh",
+            "playback_type": "sequence",
+            "files": [
+                "vrma/VRMA_03.vrma",
+                "vrma/VRMA_04.vrma"
+            ],
             "states": [
                 "Talking",
                 "Happy"
@@ -47,7 +59,8 @@
         },
         {
             "id": "think_neutral",
-            "file": "bvh/curiosity.bvh",
+            "playback_type": "single",
+            "file": "vrma/VRMA_07.vrma",
             "states": [
                 "Thinking"
             ],
@@ -55,7 +68,8 @@
             "loop_anim": true,
             "crossfade_ms": 300.0,
             "tags": [
-                "think"
+                "think",
+                "curious"
             ]
         }
     ]
