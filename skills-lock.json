@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skill/cline-sdk/SKILL.md",
       "computedHash": "dd98b0cc325fa8674ba93f1aed2b75d232ca61e5a89394bf6efe6996392f3fc2"
+    },
+    "review-team": {
+      "source": "cline/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-team/SKILL.md",
+      "computedHash": "8219351854f57ba2a5ded1b5063dac220b6b836f8051264dcdbc148e1f682c5b"
     }
   }
 }
