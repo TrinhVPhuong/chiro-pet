@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+description: "You MUST use this before any creative work, OR whenever the user's request is ambiguous, OR when files are provided for analysis. This is a MANDATORY step to prevent hallucination. Before answering or writing code, you must explore user intent, read provided files thoroughly, and validate assumptions."
 ---
 
 # Brainstorming Ideas Into Designs
