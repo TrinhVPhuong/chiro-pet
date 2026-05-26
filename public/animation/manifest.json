@@ -6,8 +6,8 @@
             "id": "idle_neutral_1",
             "playback_type": "random",
             "files": [
-                "vrma/VRMA_01.vrma",
-                "vrma/VRMA_02.vrma"
+                { "file": "vrma/VRMA_01.vrma", "weight": 80 },
+                { "file": "vrma/VRMA_02.vrma", "weight": 20 }
             ],
             "states": [
                 "Idle",

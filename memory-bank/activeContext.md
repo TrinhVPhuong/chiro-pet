@@ -26,3 +26,4 @@ The project is currently focused on the integration of the **AI Chat & Voice Sys
 - **2026-05-26:** Successfully implemented full End-to-End Animation Runtime (Rust -> React -> Three.js) with 4-Layer Blending and `.vrma` support.
 - **2026-05-26:** Transitioned file management to OS-standard AppData directory for dynamic assets.
 - **2026-05-26:** Refactored AnimationController for smoother Crossfades (Weight Blending), removed procedural breathing/blinking in favor of actual VRMA clips, and introduced Random/Sequence playback logic in `manifest.json`.
+- **2026-05-26:** Upgraded Animation & Interaction System: added "Dual Action Self-Crossfading" for seamless loops, weighted random playback, PerspectiveCamera with raycasted dragging, VRMLookAt head tracking, and Perlin noise micro-movements.

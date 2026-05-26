@@ -46,7 +46,7 @@ function disposeScene(scene: THREE.Scene): void {
 export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const vrmRef = useRef<VRM | null>(null);
-  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const [modelLoaded, setModelLoaded] = useState(false);
 
   useEffect(() => {
@@ -58,18 +58,11 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
     // --- Scene Setup ---
     const scene = new THREE.Scene();
 
-    const frustumSize = 2.5;
     const aspect = window.innerWidth / window.innerHeight;
-    const camera = new THREE.OrthographicCamera(
-      (frustumSize * aspect) / -2,
-      (frustumSize * aspect) / 2,
-      frustumSize / 2,
-      frustumSize / -2,
-      0.1,
-      20.0
-    );
-    camera.position.set(0.0, 1.0, 5.0);
-    cameraRef.current = camera;
+    const camera = new THREE.PerspectiveCamera(30, aspect, 0.1, 20.0);
+    camera.position.set(0.0, 1.0, 3.5);
+    camera.lookAt(0.0, 0.8, 0.0); // Look at chest/face level
+    cameraRef.current = camera as any;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -126,11 +119,7 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
 
     // --- Resize Handler ---
     const handleResize = () => {
-      const newAspect = window.innerWidth / window.innerHeight;
-      camera.left = (frustumSize * newAspect) / -2;
-      camera.right = (frustumSize * newAspect) / 2;
-      camera.top = frustumSize / 2;
-      camera.bottom = frustumSize / -2;
+      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
@@ -143,12 +132,14 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
     const animate = () => {
       const deltaTime = clock.getDelta();
 
-      if (vrmRef.current) {
-        vrmRef.current.update(deltaTime);
-      }
-
+      // 1. Update Mixer & Procedural Bones first
       if (animController) {
         animController.update(deltaTime);
+      }
+
+      // 2. Update VRM (LookAt, Expressions, SpringBones based on new bone positions)
+      if (vrmRef.current) {
+        vrmRef.current.update(deltaTime);
       }
 
       renderer.render(scene, camera);

@@ -54,6 +54,33 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, onClose }) => {
     >
       <div className="flex flex-col gap-2 pointer-events-auto">
         <button
+          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
+          onClick={async () => {
+            await invoke('anim_play', { 
+              command: {
+                command_id: uuidv4(),
+                source: "user",
+                timestamp_ms: Date.now(),
+                state: "Idle",
+                animation_id: "idle_neutral_1",
+                expression: "neutral",
+                loop_anim: true,
+                play_once: false,
+                crossfade_ms: 500.0,
+                duration_ms: null,
+                priority: 10,
+                context_id: "idle",
+                interrupt_policy: "higher_priority",
+                fallback: null,
+                section: null
+              }
+            });
+            onClose();
+          }}
+        >
+          Test: Idle (Random)
+        </button>
+        <button
           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
           onClick={async () => {
             await invoke('anim_play', { 
@@ -78,7 +105,34 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, onClose }) => {
             onClose();
           }}
         >
-          Test: Talk (Prio 60)
+          Test: Talk (Sequence)
+        </button>
+        <button
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
+          onClick={async () => {
+            await invoke('anim_play', { 
+              command: {
+                command_id: uuidv4(),
+                source: "user",
+                timestamp_ms: Date.now(),
+                state: "Thinking",
+                animation_id: "think_neutral",
+                expression: "neutral",
+                loop_anim: true,
+                play_once: false,
+                crossfade_ms: 300.0,
+                duration_ms: null,
+                priority: 40,
+                context_id: "thinking",
+                interrupt_policy: "higher_priority",
+                fallback: "Idle",
+                section: null
+              }
+            });
+            onClose();
+          }}
+        >
+          Test: Think (Single)
         </button>
         <button
           className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
@@ -105,16 +159,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, onClose }) => {
             onClose();
           }}
         >
-          Test: Drag (Prio 95)
-        </button>
-        <button
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
-          onClick={async () => {
-            await invoke('anim_force_idle');
-            onClose();
-          }}
-        >
-          Test: Force Idle
+          Test: Drag (Interaction)
         </button>
         <button
           className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"

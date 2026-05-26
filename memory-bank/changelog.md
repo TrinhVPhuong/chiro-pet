@@ -11,13 +11,18 @@ All notable changes to this project will be documented in this file.
 - Implemented OS-standard AppData directory generation (`animations`, `models`, `memory`) for dynamic asset storage.
 - Added `tauri-plugin-fs` to securely read assets from the AppData directory and bypass CORS restrictions.
 - Initiated Memory Bank system (`projectBrief`, `productContext`, `systemPatterns`, `techContext`, `activeContext`, `progress`, `changelog`) for persistent AI context.
+- Added "Dual Action Self-Crossfading" to solve jerky animation loops seamlessly.
+- Implemented `VRMLookAt` for Head/Eye tracking towards the mouse cursor.
+- Introduced Perlin noise-based micro-movements to spine and neck for increased liveliness.
 
 ### Changed
 - Converted animation `manifest.json` to reference new `.vrma` files instead of legacy `.bvh` files.
 - `AnimationController` now prioritizes loading assets from the AppData directory, falling back to bundled public assets only if necessary.
 - Rewrote Crossfade/Weight Blending logic in `AnimationController` for smoother animation transitions (`crossFadeFrom`).
-- Refactored `manifest.json` schema to support `playback_type` (`single`, `random`, `sequence`) using an array of `files`.
+- Refactored `manifest.json` schema to support `playback_type` (`single`, `random`, `sequence`) using an array of `files`, including weighted random support.
 - Prevented animation resets when interacting (dragging/menu) if the triggered animation ID matches the currently playing one.
+- Migrated 3D scene from `OrthographicCamera` to `PerspectiveCamera` for realistic depth.
+- Refactored dragging logic in `useDrag` to use Raycasting on a mathematical plane for 100% accurate dragging regardless of camera perspective.
 
 ### Removed
 - Removed procedural breathing and blinking logic from `AnimationController` as real `.vrma` animations now handle this seamlessly.

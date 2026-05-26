@@ -42,10 +42,15 @@ export interface AnimationSection {
     end_time: number;
 }
 
+export interface AnimationManifestFileEntry {
+    file: string;
+    weight?: number;
+}
+
 export interface AnimationManifestEntry {
     id: string;
     file?: string;
-    files?: string[];
+    files?: (string | AnimationManifestFileEntry)[];
     playback_type?: 'single' | 'random' | 'sequence';
     states: AnimationState[];
     priority: number;

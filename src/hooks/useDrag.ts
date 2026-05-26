@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
-import type * as THREE from 'three';
+import * as THREE from 'three';
 import type { VRM } from '@pixiv/three-vrm';
 import type { Position } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,7 +7,7 @@ import { playAnimation, stopAnimationContext } from '../services/animation';
 
 interface UseDragOptions {
   vrmRef: React.RefObject<VRM | null>;
-  cameraRef: React.RefObject<THREE.OrthographicCamera | null>;
+  cameraRef: React.RefObject<THREE.PerspectiveCamera | null>;
   isEnabled: boolean;
 }
 
@@ -29,10 +29,31 @@ export function useDrag({ vrmRef, cameraRef, isEnabled }: UseDragOptions) {
     }
   }, [isEnabled]);
 
+  const dragPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0));
+  const raycasterRef = useRef(new THREE.Raycaster());
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!vrmRef.current || !cameraRef.current) return;
+    
     isDraggingRef.current = true;
-    previousPositionRef.current = { x: e.clientX, y: e.clientY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    // Update drag plane to match current Z of character, facing camera
+    dragPlaneRef.current.setFromNormalAndCoplanarPoint(
+      cameraRef.current.getWorldDirection(new THREE.Vector3()).negate(),
+      vrmRef.current.scene.position
+    );
+
+    // Initial cast to set previous position in 3D world space
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycasterRef.current.setFromCamera(new THREE.Vector2(x, y), cameraRef.current);
+    
+    const intersectPoint = new THREE.Vector3();
+    raycasterRef.current.ray.intersectPlane(dragPlaneRef.current, intersectPoint);
+    if (intersectPoint) {
+       previousPositionRef.current = { x: intersectPoint.x, y: intersectPoint.y };
+    }
 
     // Trigger dragging animation
     playAnimation({
@@ -57,21 +78,23 @@ export function useDrag({ vrmRef, cameraRef, isEnabled }: UseDragOptions) {
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDraggingRef.current || !vrmRef.current || !cameraRef.current) return;
 
-    const deltaX = e.clientX - previousPositionRef.current.x;
-    const deltaY = e.clientY - previousPositionRef.current.y;
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+    
+    raycasterRef.current.setFromCamera(new THREE.Vector2(x, y), cameraRef.current);
+    
+    const intersectPoint = new THREE.Vector3();
+    raycasterRef.current.ray.intersectPlane(dragPlaneRef.current, intersectPoint);
+    
+    if (intersectPoint) {
+      const moveX = intersectPoint.x - previousPositionRef.current.x;
+      const moveY = intersectPoint.y - previousPositionRef.current.y;
 
-    const camera = cameraRef.current;
-    const worldWidth = camera.right - camera.left;
-    const worldHeight = camera.top - camera.bottom;
+      vrmRef.current.scene.position.x += moveX;
+      vrmRef.current.scene.position.y += moveY;
 
-    // Map pixel deltas to orthographic world units
-    const moveX = (deltaX / window.innerWidth) * worldWidth;
-    const moveY = (deltaY / window.innerHeight) * worldHeight;
-
-    vrmRef.current.scene.position.x += moveX;
-    vrmRef.current.scene.position.y -= moveY; // Y is inverted in 3D vs screen
-
-    previousPositionRef.current = { x: e.clientX, y: e.clientY };
+      previousPositionRef.current = { x: intersectPoint.x, y: intersectPoint.y };
+    }
   }, [vrmRef, cameraRef]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {

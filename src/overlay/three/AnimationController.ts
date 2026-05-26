@@ -27,6 +27,13 @@ export class AnimationController {
     private appDataDirPath: string | null = null;
     private unlistenCommand: (() => void) | null = null;
 
+    // Liveliness
+    private proceduralTime: number = 0;
+    private lookAtTargetObj = new THREE.Object3D();
+    private targetLookAt = new THREE.Vector3(0, 1.2, 3.0);
+    private currentLookAt = new THREE.Vector3(0, 1.2, 3.0);
+    private mouseMoveListener: ((e: MouseEvent) => void) | null = null;
+
     constructor(vrm: VRM) {
         this.vrm = vrm;
         this.mixer = new THREE.AnimationMixer(vrm.scene);
@@ -36,6 +43,18 @@ export class AnimationController {
 
     public async initialize(): Promise<void> {
         console.log("AnimationController: initialize start");
+        this.vrm.scene.add(this.lookAtTargetObj);
+        if (this.vrm.lookAt) {
+            this.vrm.lookAt.target = this.lookAtTargetObj;
+        }
+
+        this.mouseMoveListener = (e: MouseEvent) => {
+            const x = (e.clientX / window.innerWidth) * 2 - 1;
+            const y = -(e.clientY / window.innerHeight) * 2 + 1;
+            // Map NDC to world target loosely in front of the character
+            this.targetLookAt.set(x * 3.0, y * 2.0 + 1.2, 3.0);
+        };
+        window.addEventListener('mousemove', this.mouseMoveListener);
         try {
             this.appDataDirPath = await invoke<string>('get_app_data_dir_path');
         } catch (e) {
@@ -120,12 +139,27 @@ export class AnimationController {
         // Resolve files to play based on playback_type
         let filesToLoad: string[] = [];
         if (entry.playback_type === 'random' && entry.files && entry.files.length > 0) {
-            const randomIndex = Math.floor(Math.random() * entry.files.length);
-            filesToLoad = [entry.files[randomIndex]];
+            let totalWeight = 0;
+            const fileEntries = entry.files.map(f => {
+                if (typeof f === 'string') return { file: f, weight: 1 };
+                return { file: f.file, weight: f.weight ?? 1 };
+            });
+            for (const f of fileEntries) totalWeight += f.weight;
+            let randomVal = Math.random() * totalWeight;
+            let selectedFile = fileEntries[0].file;
+            for (const f of fileEntries) {
+                randomVal -= f.weight;
+                if (randomVal <= 0) {
+                    selectedFile = f.file;
+                    break;
+                }
+            }
+            filesToLoad = [selectedFile];
         } else if (entry.playback_type === 'sequence' && entry.files && entry.files.length > 0) {
-            filesToLoad = entry.files;
+            filesToLoad = entry.files.map(f => typeof f === 'string' ? f : f.file);
         } else {
-            filesToLoad = [entry.file || (entry.files && entry.files[0]) || ''];
+            const firstFile = entry.file || (entry.files && entry.files[0]);
+            filesToLoad = [typeof firstFile === 'string' ? firstFile : firstFile?.file || ''];
         }
         filesToLoad = filesToLoad.filter(f => f !== '');
 
@@ -184,7 +218,8 @@ export class AnimationController {
             const isLast = currentIndex === files.length - 1;
             const shouldLoop = isLast && command.loop_anim;
 
-            newAction.setLoop(shouldLoop ? THREE.LoopRepeat : THREE.LoopOnce, shouldLoop ? Infinity : 1);
+            // Dual Action Self-Crossfading for sequence ending loops
+            newAction.setLoop(THREE.LoopOnce, 1);
             newAction.clampWhenFinished = true;
 
             newAction.reset();
@@ -199,53 +234,87 @@ export class AnimationController {
             newAction.play();
             this.currentAction = newAction;
 
-            if (!shouldLoop) {
-                const onFinished = (e: any) => {
-                    if (e.action === newAction) {
-                        this.mixer.removeEventListener('finished', onFinished);
-                        if (!isAborted) {
-                            currentIndex = (currentIndex + 1) % files.length;
-                            this.sequenceIndices.set(entry.id, currentIndex);
-                            if (currentIndex === 0 && !command.loop_anim) {
-                                this.returnToBase(crossfadeSec);
-                            } else {
-                                playNext();
-                            }
+            const onFinished = (e: any) => {
+                if (e.action === newAction) {
+                    this.mixer.removeEventListener('finished', onFinished);
+                    if (!isAborted) {
+                        currentIndex = (currentIndex + 1) % files.length;
+                        this.sequenceIndices.set(entry.id, currentIndex);
+                        if (currentIndex === 0 && !shouldLoop) {
+                            this.returnToBase(crossfadeSec);
+                        } else {
+                            playNext();
                         }
                     }
-                };
-                this.mixer.addEventListener('finished', onFinished);
-            }
+                }
+            };
+            this.mixer.addEventListener('finished', onFinished);
         };
 
         playNext();
     }
 
     private async playBaseAnimation(entry: AnimationManifestEntry): Promise<void> {
-        let filesToLoad: string[] = [];
-        if (entry.playback_type === 'random' && entry.files && entry.files.length > 0) {
-            const randomIndex = Math.floor(Math.random() * entry.files.length);
-            filesToLoad = [entry.files[randomIndex]];
-        } else {
-            filesToLoad = [entry.file || (entry.files && entry.files[0]) || ''];
-        }
-        
-        if (filesToLoad.length === 0 || !filesToLoad[0]) return;
+        const playNextBase = async () => {
+            let filesToLoad: string[] = [];
+            if (entry.playback_type === 'random' && entry.files && entry.files.length > 0) {
+                let totalWeight = 0;
+                const fileEntries = entry.files.map(f => {
+                    if (typeof f === 'string') return { file: f, weight: 1 };
+                    return { file: f.file, weight: f.weight ?? 1 };
+                });
+                for (const f of fileEntries) totalWeight += f.weight;
+                let randomVal = Math.random() * totalWeight;
+                let selectedFile = fileEntries[0].file;
+                for (const f of fileEntries) {
+                    randomVal -= f.weight;
+                    if (randomVal <= 0) {
+                        selectedFile = f.file;
+                        break;
+                    }
+                }
+                filesToLoad = [selectedFile];
+            } else {
+                const firstFile = entry.file || (entry.files && entry.files[0]);
+                filesToLoad = [typeof firstFile === 'string' ? firstFile : firstFile?.file || ''];
+            }
+            
+            if (filesToLoad.length === 0 || !filesToLoad[0]) return;
 
-        const clip = await this.loadClip(filesToLoad[0]);
-        if (clip) {
-            if (this.baseAction) this.baseAction.stop();
-            this.baseAction = this.mixer.clipAction(clip);
-            this.baseAction.setLoop(THREE.LoopRepeat, Infinity);
-            this.baseAction.play();
-        }
+            const clip = await this.loadClip(filesToLoad[0]);
+            if (clip) {
+                const newAction = this.mixer.clipAction(clip);
+                newAction.setLoop(THREE.LoopOnce, 1);
+                newAction.clampWhenFinished = true;
+                newAction.reset();
+                newAction.setEffectiveWeight(1.0);
+
+                if (this.baseAction) {
+                    newAction.crossFadeFrom(this.baseAction, entry.crossfade_ms / 1000, false);
+                }
+                newAction.play();
+                this.baseAction = newAction;
+
+                const onFinished = (e: any) => {
+                    if (e.action === newAction) {
+                        this.mixer.removeEventListener('finished', onFinished);
+                        playNextBase();
+                    }
+                };
+                this.mixer.addEventListener('finished', onFinished);
+            }
+        };
+
+        playNextBase();
     }
 
     private playActionAnimation(clip: THREE.AnimationClip, loop: boolean, crossfadeMs: number): void {
         const crossfadeSec = crossfadeMs / 1000;
 
         const newAction = this.mixer.clipAction(clip);
-        newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+        
+        // Use manual looping (Dual Action logic simplified for continuous dispatching via finished event)
+        newAction.setLoop(THREE.LoopOnce, 1);
         newAction.clampWhenFinished = true;
 
         newAction.reset();
@@ -260,15 +329,18 @@ export class AnimationController {
         newAction.play();
         this.currentAction = newAction;
 
-        if (!loop) {
-            const onFinished = (e: any) => {
-                if (e.action === newAction) {
-                    this.mixer.removeEventListener('finished', onFinished);
+        const onFinished = (e: any) => {
+            if (e.action === newAction) {
+                this.mixer.removeEventListener('finished', onFinished);
+                if (loop && this.currentAnimationId) {
+                    // Loop manually by re-triggering the same clip, allowing crossfade
+                    this.playActionAnimation(clip, loop, crossfadeMs);
+                } else {
                     this.returnToBase(crossfadeSec);
                 }
-            };
-            this.mixer.addEventListener('finished', onFinished);
-        }
+            }
+        };
+        this.mixer.addEventListener('finished', onFinished);
     }
 
     private returnToBase(crossfadeSec: number) {
@@ -287,9 +359,41 @@ export class AnimationController {
     public update(deltaTime: number): void {
         this.mixer.update(deltaTime);
         this.sectionedPlayback.update(deltaTime);
+
+        // Update LookAt target smoothly
+        this.currentLookAt.lerp(this.targetLookAt, deltaTime * 5.0);
+        this.lookAtTargetObj.position.copy(this.currentLookAt);
+
+        // Micro-movements (Perlin noise approximation)
+        this.proceduralTime += deltaTime;
+        const spine = this.vrm.humanoid?.getRawBoneNode('spine');
+        const neck = this.vrm.humanoid?.getRawBoneNode('neck');
+        const head = this.vrm.humanoid?.getRawBoneNode('head');
+        
+        if (spine && neck && head) {
+            const intensity = this.currentAction?.isRunning() ? 0.005 : 0.02;
+
+            const noiseX1 = Math.sin(this.proceduralTime * 0.7) * Math.cos(this.proceduralTime * 1.3);
+            const noiseZ1 = Math.sin(this.proceduralTime * 0.5) * Math.cos(this.proceduralTime * 1.1);
+            spine.rotation.x += noiseX1 * intensity;
+            spine.rotation.z += noiseZ1 * intensity;
+
+            const noiseX2 = Math.sin(this.proceduralTime * 0.9 + 1.0);
+            const noiseZ2 = Math.cos(this.proceduralTime * 1.2 + 2.0);
+            neck.rotation.x += noiseX2 * intensity;
+            neck.rotation.z += noiseZ2 * intensity;
+
+            const noiseX3 = Math.cos(this.proceduralTime * 1.5 + 0.5);
+            const noiseY3 = Math.sin(this.proceduralTime * 0.8 + 1.5);
+            head.rotation.x += noiseX3 * intensity * 0.5;
+            head.rotation.y += noiseY3 * intensity * 0.5;
+        }
     }
 
     public dispose(): void {
+        if (this.mouseMoveListener) {
+            window.removeEventListener('mousemove', this.mouseMoveListener);
+        }
         if (this.unlistenCommand) {
             this.unlistenCommand();
         }

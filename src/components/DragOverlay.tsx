@@ -6,7 +6,7 @@ import { useDrag } from '../hooks/useDrag';
 interface DragOverlayProps {
   isEnabled: boolean;
   vrmRef: React.RefObject<VRM | null>;
-  cameraRef: React.RefObject<THREE.OrthographicCamera | null>;
+  cameraRef: React.RefObject<THREE.PerspectiveCamera | null>;
 }
 
 /**

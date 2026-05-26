@@ -16,7 +16,30 @@ Instead of relying on Three.js's native `THREE.LoopRepeat` (which just snaps bac
 
 ---
 
-## 2. Radial Menu Modifications
+## 2. Advanced Action Chaining & The "Living" State Machine
+### Problem Analysis
+A character playing a single animation in a loop looks like a robot. In AAA games (like The Sims) and high-end VTuber apps, characters feel alive because they seamlessly chain different animations and use transitions between drastically different poses (e.g., Sitting to Standing).
+
+### How the Industry Solves It:
+1.  **Idle Breakers:** The character never loops just one idle animation. They have a core idle, but randomly mix in "breakers" (stretching, looking around, sighing, fixing hair) every 5-15 seconds.
+2.  **Transitional Animations:** Instead of just crossfading from "Sit" to "Walk" (which causes sliding and weird IK snapping), they play a dedicated "Stand Up" animation in between.
+3.  **Action Queues:** The AI doesn't just pick one state. It queues a logical narrative: `Walk -> Grab Item -> Inspect Item -> Put Down -> Return to Idle`.
+
+### Our Proposed Architecture for Chiro-Pet:
+1.  **Weighted Randomization for Idle (Frontend):**
+    We will enhance the `manifest.json` `random` playback type to support **weights**. 
+    Example: `VRMA_Idle_Base` (80%), `VRMA_Stretch` (10%), `VRMA_LookAround` (10%). The `AnimationController` will continuously roll the dice after each clip finishes, creating a highly organic, non-repetitive idle cycle.
+2.  **Sequence Chaining for Complex Actions (Frontend):**
+    We already introduced `sequence` in the manifest. We will use this to author complex states. 
+    Example: State `WakeUp` = `['sleep_to_sit.vrma', 'yawn.vrma', 'sit_to_stand.vrma']`. The frontend will seamlessly crossfade through this array.
+3.  **AI-Driven Narrative Chaining (Backend):**
+    To make the character truly alive, the **Rust AI Backend** will generate "Behavior Trees". When the AI decides to "Read a book", Rust will send a queue of animation commands: `Prepare_Read` -> `Reading_Loop` (runs while AI thinks/processes) -> `Finish_Read`.
+4.  **Transition Matrix (Future-Proofing):**
+    If the character is in a `Sitting` state and the user drags them, instead of directly crossfading to `Dragging` (which causes a jarring snap from sitting to dangling), the system looks up a transition map and automatically inserts a `Surprise_StandUp` animation before the `Dragging` animation.
+
+---
+
+## 3. Radial Menu Modifications
 ### Plan
 Update `src/components/RadialMenu.tsx` to feature 4 generic buttons representing animation groups, validating our random/sequence logic.
 
@@ -27,7 +50,7 @@ Update `src/components/RadialMenu.tsx` to feature 4 generic buttons representing
 
 ---
 
-## 3. Camera Movement & Dragging
+## 4. Camera Movement & Dragging
 ### Problem Analysis
 `OrthographicCamera` severely limits 3D depth and dynamic camera animations. However, switching to `PerspectiveCamera` breaks our current screen-to-world pixel mapping in `useDrag.ts`.
 
@@ -42,7 +65,7 @@ Update `src/components/RadialMenu.tsx` to feature 4 generic buttons representing
 
 ---
 
-## 4. Liveliness & Interaction Features
+## 5. Liveliness & Interaction Features
 To make the character feel alive without feeling robotic:
 
 1.  **Look-At (Head/Eye Tracking):**
@@ -53,5 +76,3 @@ To make the character feel alive without feeling robotic:
     - Apply continuous, smooth noise to the spine, neck, and head bones in the `update` loop. This simulates breathing and subtle postural shifts that prevent the character from looking "frozen" even when an animation finishes or pauses.
 3.  **Physics Verification (SpringBone):**
     - Ensure `vrm.springBoneManager.update(deltaTime)` runs correctly. When Raycast Dragging moves the character rapidly, the physics engine should automatically make hair and clothing sway realistically.
-4.  **Idle Breakers:**
-    - Add a timer in `AnimationController` or a higher-level state manager. If no commands are received for X seconds, dispatch a random subtle animation (stretch, look around) to break the monotony.
