@@ -1,0 +1,62 @@
+{
+    "version": "1.0.0",
+    "default_crossfade_ms": 300.0,
+    "animations": [
+        {
+            "id": "idle_neutral_1",
+            "file": "bvh/neutral_idle.bvh",
+            "states": [
+                "Idle",
+                "Listening"
+            ],
+            "priority": 10,
+            "loop_anim": true,
+            "crossfade_ms": 500.0,
+            "tags": [
+                "idle",
+                "neutral"
+            ]
+        },
+        {
+            "id": "drag_surprised",
+            "file": "bvh/surprise.bvh",
+            "states": [
+                "Dragging"
+            ],
+            "priority": 95,
+            "loop_anim": true,
+            "crossfade_ms": 100.0,
+            "tags": [
+                "drag"
+            ]
+        },
+        {
+            "id": "talk_happy",
+            "file": "bvh/joy.bvh",
+            "states": [
+                "Talking",
+                "Happy"
+            ],
+            "priority": 60,
+            "loop_anim": true,
+            "crossfade_ms": 200.0,
+            "tags": [
+                "talk",
+                "happy"
+            ]
+        },
+        {
+            "id": "think_neutral",
+            "file": "bvh/curiosity.bvh",
+            "states": [
+                "Thinking"
+            ],
+            "priority": 40,
+            "loop_anim": true,
+            "crossfade_ms": 300.0,
+            "tags": [
+                "think"
+            ]
+        }
+    ]
+}

@@ -57,7 +57,13 @@ chiro-pet/
 │   │   └── main.rs         # Program entry
 │   ├── capabilities/       # Security capabilities
 │   └── tauri.conf.json     # Tauri runtime and build configuration
+├── docs/                   # Project documentation
+│   ├── architecture/       # Architecture documents
+│   ├── plan/               # Planning documents
+│   ├── specifications/     # Tech specs and guides
+│   └── update_log/         # Update history
 └── public/
+    ├── animation/          # Manifest and VRMA/BVH clips
     └── models/             # 3D VRM Models (.vrm files)
 ```
 

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { VRMLoaderPlugin, VRM, VRMExpressionPresetName } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM } from '@pixiv/three-vrm';
 import { info, error as logError } from '@tauri-apps/plugin-log';
+import { AnimationController } from '../overlay/three/AnimationController';
 
 interface UseVRMSceneOptions {
   modelPath: string;
@@ -84,6 +85,9 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
+    // Declare controller out here so loader can assign it
+    let animController: AnimationController | null = null;
+
     // --- VRM Model Loading ---
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -98,8 +102,18 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
         vrm.scene.scale.set(0.6, 0.6, 0.6);
 
         vrmRef.current = vrm;
-        setModelLoaded(true);
-        info('VRM Model loaded successfully');
+
+        // Initialize Animation Controller
+        animController = new AnimationController(vrm);
+        animController.initialize().then(() => {
+          setModelLoaded(true);
+          info('VRM Model & Animation Controller loaded successfully');
+        }).catch(e => {
+          console.error('Failed to init animation controller', e);
+        });
+
+        // Start rendering immediately, animation controller will kick in when ready
+        animate();
       },
       undefined,
       (err) => {
@@ -120,63 +134,33 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
     };
     window.addEventListener('resize', handleResize);
 
-    // --- Animation Loop ---
-    // Blink state is tracked via deltaTime instead of setTimeout to avoid
-    // memory leaks and ensure cleanup works correctly on unmount.
-    const clock = new THREE.Clock();
-    let blinkTimer = 3.0 + Math.random() * 3.0;
-    let isBlinking = false;
-    let blinkElapsed = 0;
-    const BLINK_DURATION = 0.15; // seconds
+    // --- Controller & Animation Loop ---
     let animationFrameId: number;
+    const clock = new THREE.Clock();
 
     const animate = () => {
       const deltaTime = clock.getDelta();
 
       if (vrmRef.current) {
-        const vrm = vrmRef.current;
-        const elapsedTime = clock.getElapsedTime();
+        vrmRef.current.update(deltaTime);
+      }
 
-        try {
-          // Breathing: subtle spine rotation
-          const spine = vrm.humanoid?.getNormalizedBoneNode('spine');
-          if (spine) {
-            spine.rotation.x = Math.sin(elapsedTime * 2) * 0.02;
-          }
-
-          // Blinking: frame-based state machine (no setTimeout)
-          if (isBlinking) {
-            blinkElapsed += deltaTime;
-            if (blinkElapsed >= BLINK_DURATION) {
-              vrm.expressionManager?.setValue(VRMExpressionPresetName.Blink, 0.0);
-              isBlinking = false;
-              blinkTimer = 3.0 + Math.random() * 3.0;
-            }
-          } else {
-            blinkTimer -= deltaTime;
-            if (blinkTimer <= 0) {
-              vrm.expressionManager?.setValue(VRMExpressionPresetName.Blink, 1.0);
-              isBlinking = true;
-              blinkElapsed = 0;
-            }
-          }
-        } catch (err) {
-          console.error('Animation error:', err);
-        }
-
-        vrm.update(deltaTime);
+      if (animController) {
+        animController.update(deltaTime);
       }
 
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
-
     // --- Cleanup ---
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+
+      if (animController) {
+        animController.dispose();
+      }
 
       // Dispose all Three.js GPU resources
       disposeScene(scene);

@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import type * as THREE from 'three';
 import type { VRM } from '@pixiv/three-vrm';
 import type { Position } from '../types';
+import { playAnimation, stopAnimationContext } from '../services/animation';
 
 interface UseDragOptions {
   vrmRef: React.RefObject<VRM | null>;
@@ -31,6 +32,25 @@ export function useDrag({ vrmRef, cameraRef, isEnabled }: UseDragOptions) {
     isDraggingRef.current = true;
     previousPositionRef.current = { x: e.clientX, y: e.clientY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    // Trigger dragging animation
+    playAnimation({
+      command_id: crypto.randomUUID(),
+      source: 'user',
+      timestamp_ms: 0,
+      state: 'Dragging',
+      animation_id: null,
+      expression: 'surprised',
+      loop_anim: true,
+      play_once: false,
+      crossfade_ms: 100,
+      duration_ms: null,
+      priority: 95,
+      context_id: 'dragging',
+      interrupt_policy: 'higher_priority',
+      fallback: 'Idle',
+      section: null
+    }).catch(console.error);
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -56,11 +76,17 @@ export function useDrag({ vrmRef, cameraRef, isEnabled }: UseDragOptions) {
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     isDraggingRef.current = false;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+    // Stop dragging animation context
+    stopAnimationContext('dragging').catch(console.error);
   }, []);
 
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
     isDraggingRef.current = false;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+    // Stop dragging animation context
+    stopAnimationContext('dragging').catch(console.error);
   }, []);
 
   return {

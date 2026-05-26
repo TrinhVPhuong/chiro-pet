@@ -1,3 +1,4 @@
+mod core;
 mod commands;
 mod input_tracking;
 
@@ -11,6 +12,18 @@ pub fn run() {
         .setup(|app| {
             let app_handle = app.handle().clone();
 
+            // Setup Animation Director
+            let manifest_path = app.path().resource_dir().unwrap_or_default().join("public/animation/manifest.json");
+            let animation_director = core::behavior::AnimationDirector::new(manifest_path.to_str().unwrap_or(""))
+                .unwrap_or_else(|_| core::behavior::AnimationDirector::new_with_manifest(
+                    core::behavior::AnimationManifest {
+                        version: "1.0".to_string(),
+                        default_crossfade_ms: 300.0,
+                        animations: vec![],
+                    }
+                ));
+            app.manage(std::sync::Arc::new(animation_director));
+
             // Start background input tracking (ALT key polling)
             input_tracking::spawn_input_tracker(app_handle);
 
@@ -21,7 +34,13 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::set_click_through])
+        .invoke_handler(tauri::generate_handler![
+            commands::set_click_through,
+            commands::anim_play,
+            commands::anim_stop_context,
+            commands::anim_force_idle,
+            commands::anim_list_available
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
