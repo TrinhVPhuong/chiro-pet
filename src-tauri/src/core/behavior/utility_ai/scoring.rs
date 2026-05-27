@@ -35,7 +35,7 @@ impl ScoringCurve {
     pub fn evaluate(&self, x: f32) -> f32 {
         let x_clamped = x.clamp(0.0, 1.0); // Assume input is normalized [0, 1]
 
-        let mut y = match self.curve_type {
+        let y = match self.curve_type {
             CurveType::Linear => {
                 self.m * (x_clamped - self.k) + self.b
             }

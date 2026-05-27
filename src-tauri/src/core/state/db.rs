@@ -1,5 +1,4 @@
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
-use std::path::PathBuf;
 use crate::core::state::errors::Result;
 use tauri::AppHandle;
 

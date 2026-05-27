@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 pub fn init_app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {

@@ -2,9 +2,9 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use rand::Rng;
+use tauri::Emitter;
 
 use crate::core::state::StateManager;
-use crate::core::state::types::{MutationSource};
 use crate::core::behavior::transition_engine::TransitionEngine;
 use super::action::UtilityAction;
 use tauri::AppHandle;
@@ -37,7 +37,7 @@ impl ProactivityTicker {
         }
     }
 
-    pub async fn run_loop(&self, interval_seconds: u64) {
+    pub async fn run_loop(self: Arc<Self>, interval_seconds: u64) {
         let mut interval = tokio::time::interval(Duration::from_secs(interval_seconds));
         
         loop {
@@ -113,31 +113,31 @@ impl ProactivityTicker {
         let top_n = scored_actions.into_iter().take(3).collect::<Vec<_>>();
         
         // Weighted random selection
-        let total_score: f32 = top_n.iter().map(|(_, s)| s).sum();
-        let mut rng = rand::thread_rng();
-        let mut pick_value = rng.gen_range(0.0..total_score);
-        
-        let mut selected_action_id = top_n[0].0.clone();
-        for (id, score) in top_n {
-            pick_value -= score;
-            if pick_value <= 0.0 {
-                selected_action_id = id;
-                break;
+        let selected_action_id = {
+            let total_score: f32 = top_n.iter().map(|(_, s)| s).sum();
+            let mut rng = rand::thread_rng();
+            let mut pick_value = rng.gen_range(0.0..total_score);
+            
+            let mut selected = top_n[0].0.clone();
+            for (id, score) in top_n {
+                pick_value -= score;
+                if pick_value <= 0.0 {
+                    selected = id;
+                    break;
+                }
             }
-        }
+            selected
+        };
 
         let selected_action = actions.get(&selected_action_id).unwrap();
 
         // Check if we need to interrupt or continue
         if let Some(active) = &active_id {
             if *active != selected_action_id {
-                let active_action = actions.get(active);
-                if let Some(aa) = active_action {
-                    // Only switch if the new action score > current action score (with inertia)
-                    // and new action is allowed to interrupt or current action is finished.
-                    // For MVP Phase 4, we assume we switch if the score is better and we made it here.
-                    log::info!("Utility AI: Switching from {} to {}", active, selected_action_id);
-                }
+                // Only switch if the new action score > current action score (with inertia)
+                // and new action is allowed to interrupt or current action is finished.
+                // For MVP Phase 4, we assume we switch if the score is better and we made it here.
+                log::info!("Utility AI: Switching from {} to {}", active, selected_action_id);
             } else {
                 log::info!("Utility AI: Continuing action {}", active);
                 return; // Nothing to change

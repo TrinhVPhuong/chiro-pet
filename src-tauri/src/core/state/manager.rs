@@ -6,7 +6,7 @@ use super::errors::Result;
 use super::guards::{GuardChain, GuardContext};
 use chrono::{Utc, NaiveDate, DateTime};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use sqlx::Row;
 
 use super::db::DbPool;
 
@@ -52,51 +52,55 @@ impl StateManager {
 
     async fn load_all_from_db(&self) -> Result<()> {
         if let Some(db) = &self.db {
-            let records = sqlx::query!("SELECT * FROM character_states")
+            let records = sqlx::query("SELECT * FROM character_states")
                 .fetch_all(&db.pool)
                 .await
                 .map_err(|e| super::errors::StateError::DatabaseError(e.to_string()))?;
 
             let mut states = self.character_states.write().await;
             for r in records {
-                let updated_at = DateTime::parse_from_rfc3339(&r.updated_at)
+                let character_id: String = r.get("character_id");
+                let updated_at_str: String = r.get("updated_at");
+                let updated_at = DateTime::parse_from_rfc3339(&updated_at_str)
                     .map(|d| d.with_timezone(&Utc))
                     .unwrap_or_else(|_| Utc::now());
 
                 let state = CharacterState {
-                    character_id: r.character_id.clone(),
-                    mood: r.mood as i8,
-                    energy: r.energy as i8,
-                    affinity: r.affinity as u8,
-                    trust: r.trust as u8,
-                    familiarity: r.familiarity as u8,
-                    curiosity: r.curiosity as u8,
-                    patience: r.patience as u8,
-                    confidence: r.confidence as u8,
+                    character_id: character_id.clone(),
+                    mood: r.get::<i64, _>("mood") as i8,
+                    energy: r.get::<i64, _>("energy") as i8,
+                    affinity: r.get::<i64, _>("affinity") as u8,
+                    trust: r.get::<i64, _>("trust") as u8,
+                    familiarity: r.get::<i64, _>("familiarity") as u8,
+                    curiosity: r.get::<i64, _>("curiosity") as u8,
+                    patience: r.get::<i64, _>("patience") as u8,
+                    confidence: r.get::<i64, _>("confidence") as u8,
                     updated_at,
-                    schema_version: r.schema_version as u32,
+                    schema_version: r.get::<i64, _>("schema_version") as u32,
                 };
-                states.insert(r.character_id, state);
+                states.insert(character_id, state);
             }
 
-            let daily_records = sqlx::query!("SELECT * FROM daily_counters")
+            let daily_records = sqlx::query("SELECT * FROM daily_counters")
                 .fetch_all(&db.pool)
                 .await
                 .map_err(|e| super::errors::StateError::DatabaseError(e.to_string()))?;
 
             let mut counters = self.daily_counters.write().await;
             for r in daily_records {
-                if let Ok(date) = NaiveDate::parse_from_str(&r.date_str, "%Y-%m-%d") {
+                let character_id: String = r.get("character_id");
+                let date_str: String = r.get("date_str");
+                if let Ok(date) = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
                     let counter = DailyCounters {
-                        character_id: r.character_id.clone(),
+                        character_id: character_id.clone(),
                         date,
-                        affinity_gained_today: r.affinity_gained_today as u32,
-                        proactive_count_today: r.proactive_count_today as u32,
-                        ai_calls_today: r.ai_calls_today as u32,
-                        ai_cost_cents_today: r.ai_cost_cents_today as u32,
-                        interaction_count_today: r.interaction_count_today as u32,
+                        affinity_gained_today: r.get::<i64, _>("affinity_gained_today") as u32,
+                        proactive_count_today: r.get::<i64, _>("proactive_count_today") as u32,
+                        ai_calls_today: r.get::<i64, _>("ai_calls_today") as u32,
+                        ai_cost_cents_today: r.get::<i64, _>("ai_cost_cents_today") as u32,
+                        interaction_count_today: r.get::<i64, _>("interaction_count_today") as u32,
                     };
-                    counters.insert(r.character_id, counter);
+                    counters.insert(character_id, counter);
                 }
             }
         }
@@ -143,7 +147,7 @@ impl StateManager {
         // Sync to DB
         if let Some(db) = &self.db {
             let updated_at_str = new_state.updated_at.to_rfc3339();
-            let _ = sqlx::query!(
+            let _ = sqlx::query(
                 r#"
                 INSERT INTO character_states (
                     character_id, mood, energy, affinity, trust, familiarity, curiosity, patience, confidence, updated_at, schema_version
@@ -159,19 +163,19 @@ impl StateManager {
                     confidence = excluded.confidence,
                     updated_at = excluded.updated_at,
                     schema_version = excluded.schema_version
-                "#,
-                new_state.character_id,
-                new_state.mood,
-                new_state.energy,
-                new_state.affinity,
-                new_state.trust,
-                new_state.familiarity,
-                new_state.curiosity,
-                new_state.patience,
-                new_state.confidence,
-                updated_at_str,
-                new_state.schema_version
+                "#
             )
+            .bind(&new_state.character_id)
+            .bind(new_state.mood)
+            .bind(new_state.energy)
+            .bind(new_state.affinity)
+            .bind(new_state.trust)
+            .bind(new_state.familiarity)
+            .bind(new_state.curiosity)
+            .bind(new_state.patience)
+            .bind(new_state.confidence)
+            .bind(updated_at_str)
+            .bind(new_state.schema_version)
             .execute(&db.pool)
             .await;
         }

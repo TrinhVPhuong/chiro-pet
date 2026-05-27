@@ -8,5 +8,3 @@ pub mod db;
 
 pub use types::*;
 pub use manager::StateManager;
-pub use events::StateEvent;
-pub use errors::{StateError, Result};

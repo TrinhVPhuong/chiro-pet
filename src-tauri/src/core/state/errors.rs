@@ -8,6 +8,9 @@ pub enum StateError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
 
+    #[error("Database error: {0}")]
+    DatabaseError(String),
+
     #[error("Migration failed: {0}")]
     MigrationFailed(String),
 

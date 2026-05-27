@@ -1,15 +1,12 @@
 use std::sync::Arc;
 use tauri::AppHandle;
-use tokio::sync::RwLock;
 use tokio::time::Duration;
 use chrono::Utc;
-use uuid::Uuid;
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 
 use crate::core::state::StateManager;
 use crate::core::state::types::{AILifecycleState, CharacterStateDelta, MutationSource};
 use crate::core::behavior::AnimationDirector;
-use crate::core::behavior::AnimationCommand;
 use crate::core::behavior::AnimationState;
 
 use super::types::*;

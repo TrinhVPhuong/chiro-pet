@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use tokio::time::Duration;
-use chrono::Utc;
 use crate::core::state::StateManager;
 use crate::core::state::types::{CharacterStateDelta, MutationSource};
 
@@ -13,7 +12,7 @@ impl DecayEngine {
         Self { state_manager }
     }
 
-    pub async fn run_loop(&self, interval_seconds: u64) {
+    pub async fn run_loop(self: Arc<Self>, interval_seconds: u64) {
         let mut interval = tokio::time::interval(Duration::from_secs(interval_seconds));
         
         loop {

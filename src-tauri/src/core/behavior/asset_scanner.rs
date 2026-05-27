@@ -70,7 +70,7 @@ fn process_vrma_file(file_path: &Path, base_dir: &Path) -> Option<AnimationManif
 
 fn map_folder_to_state_priority(folder: &str, file_name: &str) -> (Vec<AnimationState>, u8, bool) {
     let mut states = Vec::new();
-    let mut priority = 10;
+    let priority;
     let mut loop_anim = true;
     
     let file_lower = file_name.to_lowercase();

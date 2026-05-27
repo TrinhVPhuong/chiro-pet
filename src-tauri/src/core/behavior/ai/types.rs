@@ -15,6 +15,7 @@ pub enum AIEmotion {
     Annoyed,
     Surprised,
     Sad,
+    Curiosity,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

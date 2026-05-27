@@ -67,7 +67,7 @@ pub fn run() {
             tauri::async_runtime::block_on(async {
                 // To mutate Arc we need to unwrap or use interior mutability. 
                 // Since this is initialization, we extract, mutate, and put back into Arc.
-                if let Some(mut st) = std::sync::Arc::get_mut(&mut state_manager_clone) {
+                if let Some(st) = std::sync::Arc::get_mut(&mut state_manager_clone) {
                     if let Err(e) = st.init_db(&app_handle).await {
                         log::error!("Failed to initialize DB: {:?}", e);
                     }

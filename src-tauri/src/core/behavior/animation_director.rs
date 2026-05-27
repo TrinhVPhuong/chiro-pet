@@ -85,7 +85,7 @@ impl AnimationDirector {
         let mut registry = self.registry.lock().await;
         registry.remove(context_id);
 
-        if let Some(highest) = registry.get_highest_priority() {
+        if let Some(_highest) = registry.get_highest_priority() {
             // Restore highest priority context
             // For now, we just fallback to idle if context removed, 
             // a full implementation would reconstruct the command from the context or state
@@ -113,7 +113,7 @@ impl AnimationDirector {
     }
     
     // For testing
-    pub async fn test_can_interrupt(&self, mut command: AnimationCommand) -> bool {
+    pub async fn test_can_interrupt(&self, command: AnimationCommand) -> bool {
         let current_prio = *self.current_priority.lock().await;
 
         match command.interrupt_policy.as_str() {
