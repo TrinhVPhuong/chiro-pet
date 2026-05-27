@@ -177,37 +177,40 @@ Khi khởi động ứng dụng:
 ### Phase 1: Dynamic Asset Pipeline & Auto-Grouping (Rust Backend)
 **Mục tiêu:** Hệ thống tự động nhận diện và nạp các file `.vrma` vào bộ nhớ phân loại.
 - [x] (Vật lý) Tổ chức thư mục `public/animation/vrma` thành các subfolders (`actions`, `dances`, `emotions`, v.v.).
-- [ ] (Rust) Xây dựng module `AssetScanner` sử dụng `tauri-plugin-fs` để quyét đệ quy thư mục animation.
-- [ ] (Rust) Phân tách tên file/folder để gán Tag và map vào `PoseNode`.
-- [ ] (Rust) Tạo `DynamicAnimationPool` trong RAM thay vì đọc cứng từ `manifest.json`.
+- [x] (Rust) Xây dựng module `AssetScanner` sử dụng `tauri-plugin-fs` để quyét đệ quy thư mục animation.
+- [x] (Rust) Phân tách tên file/folder để gán Tag và map vào `PoseNode`.
+- [x] (Rust) Tạo `DynamicAnimationPool` trong RAM thay vì đọc cứng từ `manifest.json`.
 
 ### Phase 2: Procedural Layers & Liveliness (Three.js Frontend)
 **Mục tiêu:** Tách biệt Body, Facial Expression và LookAt ra thành các layer không xung đột.
-- [ ] (TypeScript) Refactor `AnimationController` để áp dụng 4 Layer (Mixer, Expression, Procedural, VRM Physics).
-- [ ] (TypeScript) Triển khai `ExpressionController`: Ghi đè tuyệt đối blendshapes (vd: Joy, Sad) mà không bị file `.vrma` xóa mất.
-- [ ] (TypeScript) Tích hợp và cấu hình plugin `@pixiv/three-vrm-lookat` để đầu/cổ nhìn theo chuột.
-- [ ] (TypeScript) Triển khai `Conflict Resolver`: Tự động hạ weight của LookAt/Breathing khi AnimationMixer đang play các clip mạnh (như nhảy múa).
+- [x] (TypeScript) Refactor `AnimationController` để áp dụng 4 Layer (Mixer, Expression, Procedural, VRM Physics).
+- [x] (TypeScript) Triển khai `ExpressionController`: Ghi đè tuyệt đối blendshapes (vd: Joy, Sad) mà không bị file `.vrma` xóa mất.
+- [x] (TypeScript) Tích hợp và cấu hình plugin `@pixiv/three-vrm-lookat` để đầu/cổ nhìn theo chuột.
+- [x] (TypeScript) Triển khai `Conflict Resolver`: Tự động hạ weight của LookAt/Breathing khi AnimationMixer đang play các clip mạnh (như nhảy múa).
 
 ### Phase 3: Core Transition Engine (Rust Backend)
 **Mục tiêu:** Xử lý việc chuyển đổi giữa các pose khác nhau một cách mượt mà thông qua tìm đường.
-- [ ] (Rust) Định nghĩa `PoseNode` enum (Stand, Sit, Laying, Kneel).
-- [ ] (Rust) Xây dựng bảng `TransitionGraph` chứa các `TransitionEdge` (ví dụ: `sit_to_stand`).
-- [ ] (Rust) Viết thuật toán Pathfinding (Dijkstra/A*) để tìm list animation cần chạy.
-- [ ] (Rust) Gửi IPC Event dạng hàng đợi (Queue) xuống Frontend để play nối tiếp nhau.
-- [ ] (TypeScript) Triển khai Dual Action Self-Crossfading trên Frontend để xử lý mượt các animation lặp lại.
+- [x] (Rust) Định nghĩa `PoseNode` enum (Stand, Sit, Laying, Kneel).
+- [x] (Rust) Xây dựng bảng `TransitionGraph` chứa các `TransitionEdge` (ví dụ: `sit_to_stand`).
+- [x] (Rust) Viết thuật toán Pathfinding (Dijkstra/A*) để tìm list animation cần chạy.
+- [x] (Rust) Gửi IPC Event dạng hàng đợi (Queue) xuống Frontend để play nối tiếp nhau.
+- [x] (TypeScript) Triển khai Dual Action Self-Crossfading trên Frontend để xử lý mượt các animation lặp lại.
 
 ### Phase 4: Offline Utility AI (Rust Backend)
 **Mục tiêu:** Nhân vật tự sống và hành động dựa trên State (Needs) khi Idle.
-- [ ] (Rust) Tích hợp `CharacterState` (Mood, Energy, Curiosity) làm đầu vào `Consideration`.
-- [ ] (Rust) Viết các hàm `Curve Scorers` (Linear, Logistic, Inverse Quadratic).
-- [ ] (Rust) Xây dựng `Proactivity Ticker` (15-30s): Thu thập Action -> Tính điểm -> Chọn top 3 -> Weighted Random.
-- [ ] (Rust) Gửi Action được chọn vào Transition Engine (Phase 3) để tìm đường và thực thi.
-- [ ] (Rust) Nhận tín hiệu kết thúc từ Frontend, sinh `CharacterStateDelta` và ném vào `StateManager.patch()`.
-- [ ] (IPC/Shader) Khi Action là `Sleep`, gửi IPC hạ `rim.intensity` hoặc bật `soft_anime` shader.
+- [x] (Rust) Tích hợp `CharacterState` (Mood, Energy, Curiosity) làm đầu vào `Consideration`.
+- [x] (Rust) Viết các hàm `Curve Scorers` (Linear, Logistic, Inverse Quadratic).
+- [x] (Rust) Xây dựng `Proactivity Ticker` (15-30s): Thu thập Action -> Tính điểm -> Chọn top 3 -> Weighted Random.
+- [x] (Rust) Gửi Action được chọn vào Transition Engine (Phase 3) để tìm đường và thực thi.
+- [x] (Rust) Trì hoãn gửi State Delta, chỉ gọi `StateManager.patch()` qua SQLite DB khi nhận được tín hiệu kết thúc từ Frontend.
+- [x] (IPC/Shader) Khi Action là `Sleep`, gửi IPC hạ độ sáng đèn (Mô phỏng dim intensity) qua shader/lighting.
+- [x] (Rust) Triển khai `DecayEngine` trừ Energy/Mood theo thời gian thực (được gọi từ `lib.rs`).
+- [x] (Rust) Triển khai lưu trữ vật lý bằng `sqlx` vào database SQLite (`chiro_pet.db`).
 
 ### Phase 5: High-Level Orchestrator & AI Integration (Rust/TS)
 **Mục tiêu:** Tích hợp OpenAI và phân ranh giới rõ ràng giữa AI Online và Offline Utility AI.
-- [ ] (Rust) Cấu hình `ai-interaction-system.md`: OpenAI API trả về JSON chứa `suggested_animation` và `state_delta`.
-- [ ] (Rust) Viết Guard Logic: Khi có prompt từ OpenAI, Offline Utility AI lập tức bị Suspend (Tạm ngưng).
-- [ ] (Rust) Khi OpenAI trả kết quả, đẩy `suggested_animation` thẳng vào Transition Engine.
-- [ ] (Rust) Resume Offline Utility AI khi cuộc hội thoại kết thúc và nhân vật rơi vào Idle sau 60s.
+- [x] (Rust) Thiết lập các Structs nhận JSON Response (message, emotion, intent, state_delta, suggested_animation...).
+- [x] (Rust) Khởi tạo `AIOrchestrator` xử lý thay đổi lifecycle: `Idle` -> `Thinking` -> `Speaking` -> `Idle`.
+- [x] (Rust) Cập nhật Suspend/Resume Guard trong `ProactivityTicker` (có cooldown 60s).
+- [x] (Rust/TS) Xử lý Execution: Gửi `suggested_animation` thẳng tới `AnimationDirector` thông qua hàm `play_direct_animation` của `TransitionEngine`.
+- [x] (TS) Tạo component `ChatPanel` và `SpeechBubble` để nhập/hiển thị text kết nối với Tauri IPC commands.

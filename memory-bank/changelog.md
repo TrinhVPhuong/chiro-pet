@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Integrated SQLite database using `sqlx` in `StateManager` for persistent data storage.
+- Implemented `DecayEngine` to naturally decrease character's energy and mood over time.
+- Integrated `AIOrchestrator` to handle mock OpenAI responses and lifecycle (`Idle` -> `Thinking` -> `Speaking`).
+- Added React components `ChatPanel` and `SpeechBubble` for Frontend interaction and message display.
+- Implemented IPC event `change_shader_mode` to dim lighting when the character performs the `take_a_nap` action.
+- Added Suspend/Resume guard (60s cooldown) to `ProactivityTicker` when AI interactions occur.
 - Revised `transition_and_behavior_implementation.md` to precisely integrate with Shader and Procedural Animation systems, detailing the frame execution pipeline and conflict resolution logic.
 - Authored deep AAA-grade technical specification for the Transition Engine and Offline Utility AI (`docs/plan/transition_and_behavior_implementation.md`).
 - Implemented full End-to-End Animation Runtime linking Rust `AnimationDirector` to React `AnimationController`.
@@ -16,6 +22,9 @@ All notable changes to this project will be documented in this file.
 - Added "Dual Action Self-Crossfading" to solve jerky animation loops seamlessly.
 - Implemented `VRMLookAt` for Head/Eye tracking towards the mouse cursor.
 - Introduced Perlin noise-based micro-movements to spine and neck for increased liveliness.
+
+### Changed
+- Refactored Utility AI to defer State Deltas (`pending_state_delta`) until the `notify_animation_finished` event is received via `TransitionEngine`.
 
 ### Changed
 - Auto-grouped 80+ `.vrma` files into categorized subfolders (`actions/`, `dances/`, `emotions/`, etc.) to improve project asset organization.

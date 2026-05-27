@@ -186,3 +186,34 @@ impl StateManager {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_state_manager_patch() {
+        let manager = StateManager::new().await.unwrap();
+        
+        let delta = CharacterStateDelta {
+            mood: 2,
+            energy: -10,
+            affinity: 0,
+            trust: 0,
+            familiarity: 0,
+            curiosity: 0,
+            patience: 0,
+            confidence: 0,
+        };
+
+        let result = manager.patch_character_state("chiro", delta, MutationSource::OfflineAI).await.unwrap();
+        
+        // Initial defaults are: mood: 0, energy: 70
+        assert_eq!(result.new_state.mood, 2);
+        assert_eq!(result.new_state.energy, 60);
+
+        let current = manager.get_character_state("chiro").await.unwrap();
+        assert_eq!(current.mood, 2);
+        assert_eq!(current.energy, 60);
+    }
+}

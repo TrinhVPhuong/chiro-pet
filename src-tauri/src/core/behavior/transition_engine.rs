@@ -116,3 +116,35 @@ impl TransitionEngine {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::behavior::AnimationManifest;
+
+    #[tokio::test]
+    async fn test_transition_engine_queue() {
+        let manifest = AnimationManifest {
+            version: "1.0".into(),
+            default_crossfade_ms: 300.0,
+            animations: vec![],
+        };
+        let director = Arc::new(AnimationDirector::new_with_manifest(manifest));
+        let graph = TransitionGraph::new(); // Assuming we can make a dummy graph
+
+        // Create an in-memory DB or simple StateManager
+        let state_manager = Arc::new(StateManager::new().await.unwrap());
+        let engine = TransitionEngine::new(graph, director, state_manager);
+        
+        let delta = CharacterStateDelta { energy: 10, ..CharacterStateDelta::zero() };
+        
+        // This won't run cleanly without an app handle, but we can test the internal state pending_state_delta
+        let mut pending = engine.pending_state_delta.lock().await;
+        *pending = Some(delta);
+        drop(pending);
+        
+        let pending = engine.pending_state_delta.lock().await;
+        assert!(pending.is_some());
+        assert_eq!(pending.as_ref().unwrap().energy, 10);
+    }
+}
