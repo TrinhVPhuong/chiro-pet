@@ -21,6 +21,12 @@ pub struct AnimationManifestEntry {
     pub crossfade_ms: f32,
     pub sections: Option<HashMap<String, AnimationSection>>,
     pub tags: Option<Vec<String>>,
+    #[serde(default = "default_base_pose")]
+    pub base_pose: String,
+}
+
+fn default_base_pose() -> String {
+    "Stand".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

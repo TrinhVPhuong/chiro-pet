@@ -6,6 +6,8 @@ import DragOverlay from './components/DragOverlay';
 import RadialMenu from './components/RadialMenu';
 import StatusIndicator from './components/StatusIndicator';
 import LoadingIndicator from './components/LoadingIndicator';
+import ChatPanel from './components/ChatPanel';
+import SpeechBubble from './components/SpeechBubble';
 import type { Position } from './types';
 import './App.css';
 
@@ -49,6 +51,9 @@ function App() {
           onClose={() => setMenuOpen(false)}
         />
       )}
+
+      <SpeechBubble />
+      <ChatPanel />
 
       <LoadingIndicator visible={!modelLoaded} />
       <StatusIndicator visible={isAltPressed} label="Drag Mode Active" />

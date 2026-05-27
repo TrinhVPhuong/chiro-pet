@@ -8,6 +8,16 @@ pub fn set_click_through(window: tauri::Window, ignore: bool) {
 }
 
 use crate::core::behavior::{AnimationCommand, AnimationState, AnimationDirector};
+use crate::core::behavior::ai::AIOrchestrator;
+use crate::core::behavior::ai::types::AIInteractionResponse;
+
+#[tauri::command]
+pub async fn ai_send_chat(
+    orchestrator: tauri::State<'_, std::sync::Arc<AIOrchestrator>>,
+    message: String,
+) -> Result<AIInteractionResponse, String> {
+    orchestrator.handle_chat(message).await
+}
 
 #[tauri::command]
 pub async fn anim_play(
@@ -36,12 +46,25 @@ pub async fn anim_force_idle(
 }
 
 #[tauri::command]
+pub async fn notify_animation_finished(
+    app: tauri::AppHandle,
+    transition_engine: tauri::State<'_, std::sync::Arc<crate::core::behavior::TransitionEngine>>,
+) -> Result<(), String> {
+    transition_engine.on_animation_finished(&app).await
+}
+
+#[tauri::command]
 pub async fn anim_list_available(
     state: tauri::State<'_, std::sync::Arc<AnimationDirector>>,
 ) -> Result<Vec<String>, String> {
     // For now return an empty list or mock list, as we haven't exposed the manifest list directly
     // Ideally we should add a method to AnimationDirector to return this
     Ok(vec![])
+}
+
+#[tauri::command]
+pub fn procedural_get_settings() -> Result<crate::core::procedural::settings::ProceduralAnimationSettings, String> {
+    Ok(crate::core::procedural::settings::ProceduralAnimationSettings::default())
 }
 
 #[tauri::command]

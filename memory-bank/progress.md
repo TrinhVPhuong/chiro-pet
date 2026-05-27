@@ -8,20 +8,32 @@
 - **Dynamic Asset Loading:** Uses `tauri-plugin-fs` to securely load `.vrma` and configurations from the OS `AppData` directory.
 - **Input Tracking:** Global ALT key detection and cross-process communication (Rust -> React).
 - **Interactions:** Basic Drag & Drop mapping screen space to 3D world space. Context menu (`RadialMenu`) with smooth animations and click-outside handling.
+- **Utility AI:** Autonomous action selection via a Background Ticker, scoring curves, and a P0 `StateManager`.
 - **Optimizations:** Reduced Tokio footprint and clean module separation.
 
 ## What's Left to Build
-- **AI & Interaction:**
-  - OpenAI-compatible API integration for chat.
-  - Proactivity engine (calculating `proactivity_score`).
-  - Dynamic states (Mood, Energy, Affinity).
+- **Phase 5: High-Level Orchestrator & AI Integration:**
+  - OpenAI-compatible API integration (`ai-interaction-system.md`).
+  - Handling Suspend/Resume of the Offline Utility AI during prompts.
+  - Pushing `suggested_animation` from LLM into the Transition Engine.
+  - Refactoring and synchronizing the hardcoded parts from Phases 1-4 into a cohesive system.
+- **State System Technical Debt (Deferred from Phase 4):**
+  - SQLite persistence using `sqlx`.
+  - Full `GuardChain` (DailyCap, PrivacyMode, PersonalityModifier, GameLogic).
+  - `DecayEngine` and `DailyResetScheduler`.
 - **Asset System:**
-  - SQLite registry for dynamic assets and memory.
+  - SQLite registry for long-term memory and asset state persistence.
 - **Cross-Platform:**
   - Implement Linux/macOS input tracking (e.g., `rdev`).
 
 ## Current Status
-Phase 2 (Animation Runtime) has been refactored for smoother transitions, advanced capabilities (Random/Sequence/Weighted playback), liveliness features (Head/Eye tracking, micro-movements), and robust raycast-based dragging. We have recently structured the asset pipeline by automatically categorizing 80+ `.vrma` files into organized subfolders and drafted a comprehensive AAA-grade architectural plan for the future Transition Engine and Offline Utility AI to simulate life-like behaviors. The project is preparing to move towards implementing these offline AI systems alongside the OpenAI Chat integration and SQLite memory management.
+The project is executing a 5-Phase Refactor for Transition and Behavior Implementation. 
+- **Phase 1 (Dynamic Asset Pipeline)** is complete.
+- **Phase 2 (Procedural Layers & Liveliness)** is complete.
+- **Phase 3 (Core Transition Engine)** is complete.
+- **Phase 4 (Offline Utility AI)** is complete: Developed the autonomous behavior system. Built `ScoringCurve`s, `Consideration`s, and `UtilityAction`s. Created a Tokio `ProactivityTicker` that selects actions based on utility scores and Action Inertia, then requests poses via `TransitionEngine`. Built a P0 in-memory `StateManager` with basic `RangeGuard`.
+
+We are now preparing to initiate **Phase 5: High-Level Orchestrator & AI Integration** to wrap up the codebase and synchronize all systems with OpenAI.
 
 ## Known Issues
 - macOS and Linux currently use dummy stubs for global input tracking; full functionality is Windows-only at this moment.

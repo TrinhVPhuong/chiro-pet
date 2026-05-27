@@ -12,3 +12,31 @@ export function listenAltKeyState(
     callback(event.payload.pressed);
   });
 }
+
+export function notifyAnimationFinished(): Promise<void> {
+  import('@tauri-apps/api/core').then(({ invoke }) => {
+    invoke('notify_animation_finished').catch((e) => {
+      console.error('Failed to notify animation finished:', e);
+    });
+  });
+  return Promise.resolve();
+}
+
+export interface SpeechBubblePayload {
+  message: string;
+  emotion: string;
+}
+
+export function listenShowBubble(
+  callback: (payload: SpeechBubblePayload) => void
+): Promise<UnlistenFn> {
+  return listen<SpeechBubblePayload>('show_bubble', (event) => {
+    callback(event.payload);
+  });
+}
+
+export function sendChatMessage(message: string): Promise<void> {
+  return import('@tauri-apps/api/core').then(({ invoke }) => {
+    return invoke('ai_send_chat', { message });
+  });
+}

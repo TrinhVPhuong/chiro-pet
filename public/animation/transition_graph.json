@@ -1,0 +1,52 @@
+{
+  "nodes": {
+    "Stand": { "id": "Stand", "tag": "stand" },
+    "Sit": { "id": "Sit", "tag": "sit" },
+    "Laying": { "id": "Laying", "tag": "laying" },
+    "Kneel": { "id": "Kneel", "tag": "kneel" }
+  },
+  "edges": [
+    {
+      "from_node": "Sit",
+      "to_node": "Stand",
+      "transition_animation": "action_standup",
+      "cost": 1.0,
+      "can_interrupt": false
+    },
+    {
+      "from_node": "Stand",
+      "to_node": "Sit",
+      "transition_animation": "action_crouch",
+      "cost": 1.0,
+      "can_interrupt": false
+    },
+    {
+      "from_node": "Stand",
+      "to_node": "Laying",
+      "transition_animation": "action_laydown",
+      "cost": 2.0,
+      "can_interrupt": false
+    },
+    {
+      "from_node": "Laying",
+      "to_node": "Stand",
+      "transition_animation": "action_standup",
+      "cost": 2.0,
+      "can_interrupt": false
+    },
+    {
+      "from_node": "Stand",
+      "to_node": "Kneel",
+      "transition_animation": "action_crouch",
+      "cost": 1.0,
+      "can_interrupt": false
+    },
+    {
+      "from_node": "Kneel",
+      "to_node": "Stand",
+      "transition_animation": "action_standup",
+      "cost": 1.0,
+      "can_interrupt": false
+    }
+  ]
+}

@@ -54,3 +54,4 @@ Mục tiêu chính: Viết Background Ticker (15-30s). Sử dụng `CharacterSta
 brainstorming: Bắt đầu triển khai "Phase 5: High-Level Orchestrator & AI Integration" dựa theo checklist trong file `docs/plan/transition_and_behavior_implementation.md`.
 
 Mục tiêu chính: Tích hợp với hệ thống OpenAI (`ai-interaction-system.md`). Xử lý việc Suspend/Resume Offline Utility AI khi có prompt từ OpenAI. Đẩy trực tiếp `suggested_animation` từ LLM vào Transition Engine.
+```

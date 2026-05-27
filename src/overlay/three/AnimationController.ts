@@ -2,17 +2,25 @@ import * as THREE from 'three';
 import type { VRM } from '@pixiv/three-vrm';
 import { VRMAClipLoader } from './VRMAClipLoader';
 import { SectionedPlayback } from './SectionedPlayback';
+import { ExpressionController } from './ExpressionController';
+import { ProceduralController } from './ProceduralController';
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { listenAnimationCommand } from '../../services/animation';
+import { notifyAnimationFinished } from '../../services/tauriEvents';
 import type { AnimationCommand, AnimationManifest, AnimationManifestEntry } from '../../types/animation';
+import type { ProceduralAnimationSettings } from '../../types/procedural';
 
 export class AnimationController {
     private vrm: VRM;
     private mixer: THREE.AnimationMixer;
     private clipLoader: VRMAClipLoader;
     private sectionedPlayback: SectionedPlayback;
+
+    // Controllers
+    private expressionController: ExpressionController;
+    private proceduralController: ProceduralController;
 
     // Layers
     private baseAction: THREE.AnimationAction | null = null;
@@ -28,17 +36,20 @@ export class AnimationController {
     private unlistenCommand: (() => void) | null = null;
 
     // Liveliness
-    private proceduralTime: number = 0;
     private lookAtTargetObj = new THREE.Object3D();
-    private targetLookAt = new THREE.Vector3(0, 1.2, 3.0);
-    private currentLookAt = new THREE.Vector3(0, 1.2, 3.0);
     private mouseMoveListener: ((e: MouseEvent) => void) | null = null;
+    
+    // Conflict Resolver state
+    private targetConflictWeight: number = 1.0;
+    private currentConflictWeight: number = 1.0;
 
     constructor(vrm: VRM) {
         this.vrm = vrm;
         this.mixer = new THREE.AnimationMixer(vrm.scene);
         this.clipLoader = new VRMAClipLoader();
         this.sectionedPlayback = new SectionedPlayback(this.mixer);
+        this.expressionController = new ExpressionController(vrm);
+        this.proceduralController = new ProceduralController(vrm);
     }
 
     public async initialize(): Promise<void> {
@@ -52,9 +63,18 @@ export class AnimationController {
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = -(e.clientY / window.innerHeight) * 2 + 1;
             // Map NDC to world target loosely in front of the character
-            this.targetLookAt.set(x * 3.0, y * 2.0 + 1.2, 3.0);
+            this.proceduralController.targetLookAt.set(x * 3.0, y * 2.0 + 1.2, 3.0);
         };
         window.addEventListener('mousemove', this.mouseMoveListener);
+        
+        // Fetch Procedural Settings
+        try {
+            const settings = await invoke<ProceduralAnimationSettings>('procedural_get_settings');
+            this.proceduralController.setSettings(settings);
+            console.log("AnimationController: Procedural settings loaded", settings);
+        } catch (e) {
+            console.warn("AnimationController: Failed to load procedural settings", e);
+        }
         try {
             this.appDataDirPath = await invoke<string>('get_app_data_dir_path');
         } catch (e) {
@@ -116,14 +136,9 @@ export class AnimationController {
     }
 
     private async handleCommand(command: AnimationCommand): Promise<void> {
-        // Update expression (Layer 4)
-        if (command.expression && this.vrm.expressionManager) {
-            // Reset all expressions
-            Object.keys(this.vrm.expressionManager.expressions).forEach(name => {
-                this.vrm.expressionManager!.setValue(name, 0);
-            });
-            // Set new expression
-            this.vrm.expressionManager.setValue(command.expression, 1.0);
+        // Update expression (Layer 2)
+        if (command.expression !== undefined) {
+            this.expressionController.setExpression(command.expression);
         }
 
         if (!command.animation_id || !this.manifest) return;
@@ -172,6 +187,11 @@ export class AnimationController {
         }
         this.currentAnimationId = command.animation_id;
 
+        // Update Conflict Resolver Weight based on tags
+        if (entry.tags) {
+            this.updateConflictWeightFromTags(entry.tags);
+        }
+
         if (entry.playback_type === 'sequence' && filesToLoad.length > 1) {
             this.playSequence(filesToLoad, command, entry);
         } else {
@@ -198,6 +218,22 @@ export class AnimationController {
                     this.playActionAnimation(clip, command.loop_anim, command.crossfade_ms);
                 }
             }
+        }
+    }
+
+    private updateConflictWeightFromTags(tags: string[]) {
+        // Simple heuristic: if it's a dance or action, disable procedural. If idle, full procedural.
+        if (tags.some(t => t.includes('dance') || t.includes('actions') || t.includes('exercises'))) {
+            this.targetConflictWeight = 0.0;
+        } else if (tags.some(t => t.includes('idle') || t.includes('emotions'))) {
+            // Allow full procedural during idle. For emotions, keep it partial or full based on spec. 
+            // In spec: emotion reaction drops weight to 0.15 for lookAt.
+            this.targetConflictWeight = 0.2; 
+            if (tags.some(t => t.includes('idle'))) {
+                this.targetConflictWeight = 1.0;
+            }
+        } else {
+            this.targetConflictWeight = 1.0;
         }
     }
 
@@ -311,9 +347,27 @@ export class AnimationController {
     private playActionAnimation(clip: THREE.AnimationClip, loop: boolean, crossfadeMs: number): void {
         const crossfadeSec = crossfadeMs / 1000;
 
-        const newAction = this.mixer.clipAction(clip);
+        // Determine if we are doing a self-crossfade loop
+        let isSelfCrossfading = false;
+        let newAction: THREE.AnimationAction;
         
-        // Use manual looping (Dual Action logic simplified for continuous dispatching via finished event)
+        if (loop && this.currentAction && this.currentAction.getClip() === clip) {
+            // Self-crossfade: We need to create a duplicate action for the same clip to crossfade into it
+            // Three.js by default returns the same action for the same clip. We force a new one using a clone of the clip
+            // or by utilizing the Root.
+            
+            // To be safe and simple without cloning clips which consumes memory, 
+            // Three.js `AnimationMixer.clipAction` can take an optional `root` or `blendMode`.
+            // Alternatively, since we use `LoopOnce`, we can just fade out the current and fade in a new Action.
+            // A common trick is to clone the clip just for the overlapping period.
+            const clonedClip = clip.clone();
+            clonedClip.name = clip.name; // Keep name for identification
+            newAction = this.mixer.clipAction(clonedClip);
+            isSelfCrossfading = true;
+        } else {
+            newAction = this.mixer.clipAction(clip);
+        }
+
         newAction.setLoop(THREE.LoopOnce, 1);
         newAction.clampWhenFinished = true;
 
@@ -322,6 +376,13 @@ export class AnimationController {
 
         if (this.currentAction) {
             newAction.crossFadeFrom(this.currentAction, crossfadeSec, false);
+            // If it was a self-crossfade cloned clip, we should clean up the old action eventually
+            if (isSelfCrossfading) {
+                const oldAction = this.currentAction;
+                setTimeout(() => {
+                    this.mixer.uncacheAction(oldAction.getClip());
+                }, crossfadeMs + 100);
+            }
         } else if (this.baseAction && this.baseAction.isRunning()) {
             newAction.crossFadeFrom(this.baseAction, crossfadeSec, false);
         }
@@ -333,10 +394,14 @@ export class AnimationController {
             if (e.action === newAction) {
                 this.mixer.removeEventListener('finished', onFinished);
                 if (loop && this.currentAnimationId) {
-                    // Loop manually by re-triggering the same clip, allowing crossfade
+                    // Loop manually by re-triggering with crossfade (Dual Action Self-Crossfade)
                     this.playActionAnimation(clip, loop, crossfadeMs);
                 } else {
                     this.returnToBase(crossfadeSec);
+                    // Notify backend if this was a transition or one-shot
+                    if (this.currentAnimationId === clip.name || !loop) {
+                        notifyAnimationFinished();
+                    }
                 }
             }
         };
@@ -354,43 +419,33 @@ export class AnimationController {
         }
         this.currentAction = null;
         this.currentAnimationId = null;
+        
+        // Reset conflict weight to idle when returning to base
+        this.targetConflictWeight = 1.0;
     }
 
     public update(deltaTime: number): void {
+        // 1. Layer 0-1: Animation Mixer
         this.mixer.update(deltaTime);
         this.sectionedPlayback.update(deltaTime);
 
-        // Update LookAt target smoothly
-        this.currentLookAt.lerp(this.targetLookAt, deltaTime * 5.0);
-        this.lookAtTargetObj.position.copy(this.currentLookAt);
+        // Update Conflict Resolver interpolation
+        this.currentConflictWeight += (this.targetConflictWeight - this.currentConflictWeight) * 5.0 * deltaTime;
+        this.proceduralController.conflictWeight = Math.max(0, Math.min(1, this.currentConflictWeight));
 
-        // Micro-movements (Perlin noise approximation)
-        this.proceduralTime += deltaTime;
-        const spine = this.vrm.humanoid?.getRawBoneNode('spine');
-        const neck = this.vrm.humanoid?.getRawBoneNode('neck');
-        const head = this.vrm.humanoid?.getRawBoneNode('head');
-        
-        if (spine && neck && head) {
-            const intensity = this.currentAction?.isRunning() ? 0.005 : 0.02;
+        // 2. Layer 2: Expression System
+        this.expressionController.update(deltaTime);
 
-            const noiseX1 = Math.sin(this.proceduralTime * 0.7) * Math.cos(this.proceduralTime * 1.3);
-            const noiseZ1 = Math.sin(this.proceduralTime * 0.5) * Math.cos(this.proceduralTime * 1.1);
-            spine.rotation.x += noiseX1 * intensity;
-            spine.rotation.z += noiseZ1 * intensity;
+        // 3. Layer 3: Procedural System
+        this.proceduralController.update(deltaTime);
 
-            const noiseX2 = Math.sin(this.proceduralTime * 0.9 + 1.0);
-            const noiseZ2 = Math.cos(this.proceduralTime * 1.2 + 2.0);
-            neck.rotation.x += noiseX2 * intensity;
-            neck.rotation.z += noiseZ2 * intensity;
-
-            const noiseX3 = Math.cos(this.proceduralTime * 1.5 + 0.5);
-            const noiseY3 = Math.sin(this.proceduralTime * 0.8 + 1.5);
-            head.rotation.x += noiseX3 * intensity * 0.5;
-            head.rotation.y += noiseY3 * intensity * 0.5;
-        }
+        // 4. Layer 4: VRM Physics & Updates
+        this.vrm.update(deltaTime);
     }
 
     public dispose(): void {
+        this.expressionController.dispose();
+        this.proceduralController.dispose();
         if (this.mouseMoveListener) {
             window.removeEventListener('mousemove', this.mouseMoveListener);
         }

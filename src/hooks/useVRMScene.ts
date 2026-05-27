@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRM } from '@pixiv/three-vrm';
 import { info, error as logError } from '@tauri-apps/plugin-log';
+import { listen } from '@tauri-apps/api/event';
 import { AnimationController } from '../overlay/three/AnimationController';
 
 interface UseVRMSceneOptions {
@@ -132,13 +133,11 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
     const animate = () => {
       const deltaTime = clock.getDelta();
 
-      // 1. Update Mixer & Procedural Bones first
+      // Update Orchestrator (4 Layers: Mixer, Expression, Procedural, VRM)
       if (animController) {
         animController.update(deltaTime);
-      }
-
-      // 2. Update VRM (LookAt, Expressions, SpringBones based on new bone positions)
-      if (vrmRef.current) {
+      } else if (vrmRef.current) {
+        // Fallback if controller not ready yet
         vrmRef.current.update(deltaTime);
       }
 
@@ -146,8 +145,45 @@ export function useVRMScene({ modelPath }: UseVRMSceneOptions) {
       animationFrameId = requestAnimationFrame(animate);
     };
 
+
+    // --- IPC Listener for Shader Changes ---
+    let unlistenShader: (() => void) | undefined;
+    listen<{mode: string}>('change_shader_mode', (event) => {
+        if (vrmRef.current) {
+            // Very simplified: loop through materials to adjust lighting if they are MToon
+            vrmRef.current.scene.traverse((obj) => {
+                if (obj instanceof THREE.Mesh) {
+                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    materials.forEach(mat => {
+                        // In a real MToon material we'd adjust specific uniforms.
+                        // Here we simulate by altering ambient lighting or emissive loosely if possible,
+                        // or just rely on a global lighting change.
+                        if (mat.name.includes("MToon") || mat.type === "ShaderMaterial") {
+                            // Example pseudo-modification:
+                            if (event.payload.mode === "sleep") {
+                                // Dim material (if applicable API existed here)
+                            } else {
+                                // Restore
+                            }
+                        }
+                    });
+                }
+            });
+            // Better approach is to adjust the global light
+            if (event.payload.mode === "sleep") {
+                ambientLight.intensity = 0.2;
+                directionalLight.intensity = 0.5;
+            } else {
+                ambientLight.intensity = 0.6;
+                directionalLight.intensity = Math.PI;
+            }
+        }
+    }).then((fn: () => void) => { unlistenShader = fn; });
+
+
     // --- Cleanup ---
     return () => {
+      if (unlistenShader) unlistenShader();
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
 

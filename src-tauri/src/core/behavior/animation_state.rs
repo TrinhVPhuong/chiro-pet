@@ -20,5 +20,7 @@ pub enum AnimationState {
     Dragging,
     MenuOpen,
     Petted,
+    Dancing,
+    Exercising,
     OneShotAction(String),
 }
