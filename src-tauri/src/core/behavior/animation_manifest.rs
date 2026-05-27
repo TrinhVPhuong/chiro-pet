@@ -37,6 +37,7 @@ pub struct AnimationManifest {
 }
 
 impl AnimationManifest {
+    #[allow(dead_code)]
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
         serde_json::from_str(&content).map_err(|e| e.to_string())
@@ -64,6 +65,7 @@ impl AnimationManifest {
         Some(candidates[index].id.clone())
     }
 
+    #[allow(dead_code)]
     pub fn get_entry(&self, animation_id: &str) -> Option<AnimationManifestEntry> {
         self.animations.iter().find(|a| a.id == animation_id).cloned()
     }

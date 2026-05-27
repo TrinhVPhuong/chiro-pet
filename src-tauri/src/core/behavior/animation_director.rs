@@ -16,6 +16,7 @@ pub struct AnimationDirector {
 }
 
 impl AnimationDirector {
+    #[allow(dead_code)]
     pub fn new(manifest_path: &str) -> Result<Self, String> {
         let manifest = AnimationManifest::load_from_file(manifest_path)?;
         Ok(Self {
@@ -113,6 +114,7 @@ impl AnimationDirector {
     }
     
     // For testing
+    #[allow(dead_code)]
     pub async fn test_can_interrupt(&self, command: AnimationCommand) -> bool {
         let current_prio = *self.current_priority.lock().await;
 
@@ -124,6 +126,7 @@ impl AnimationDirector {
         }
     }
     
+    #[allow(dead_code)]
     pub async fn set_priority_for_test(&self, p: u8) {
         *self.current_priority.lock().await = p;
     }

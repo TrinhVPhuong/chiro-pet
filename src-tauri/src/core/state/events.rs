@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 
 use super::types::{AppMode, AILifecycleState, CharacterState, CharacterStateDelta, MutationSource};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum StateEvent {

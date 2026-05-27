@@ -42,6 +42,7 @@ impl AnimationCommand {
         }
     }
 
+    #[allow(dead_code)]
     pub fn thinking(context_id: String) -> Self {
         Self {
             command_id: Uuid::new_v4().to_string(),
@@ -62,6 +63,7 @@ impl AnimationCommand {
         }
     }
 
+    #[allow(dead_code)]
     pub fn talking(duration_ms: u64, context_id: String) -> Self {
         Self {
             command_id: Uuid::new_v4().to_string(),
@@ -82,6 +84,7 @@ impl AnimationCommand {
         }
     }
 
+    #[allow(dead_code)]
     pub fn dragging() -> Self {
         Self {
             command_id: Uuid::new_v4().to_string(),

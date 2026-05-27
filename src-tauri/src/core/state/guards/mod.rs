@@ -16,6 +16,7 @@ impl GuardContext {
     }
 }
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait StateGuard: Send + Sync {
     async fn apply(

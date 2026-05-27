@@ -116,6 +116,7 @@ pub struct CharacterStateDelta {
 }
 
 impl CharacterStateDelta {
+    #[allow(dead_code)]
     pub fn zero() -> Self {
         Self {
             mood: 0, energy: 0, affinity: 0, trust: 0,
@@ -123,6 +124,7 @@ impl CharacterStateDelta {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_zero(&self) -> bool {
         self.mood == 0 && self.energy == 0 && self.affinity == 0 && 
         self.trust == 0 && self.familiarity == 0 && self.curiosity == 0 && 

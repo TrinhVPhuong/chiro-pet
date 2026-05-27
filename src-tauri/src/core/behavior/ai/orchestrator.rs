@@ -13,6 +13,7 @@ use super::types::*;
 
 pub struct AIOrchestrator {
     state_manager: Arc<StateManager>,
+    #[allow(dead_code)]
     animation_director: Arc<AnimationDirector>,
     app_handle: AppHandle,
 }
