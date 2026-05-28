@@ -167,7 +167,7 @@ impl ProactivityTicker {
         }
 
         // Tell Transition Engine to go to target pose, and queue the state delta to apply when finished
-        if let Err(e) = self.transition_engine.request_pose_with_delta(&selected_action.target_pose, selected_action.state_effects.clone(), &self.app_handle).await {
+        if let Err(e) = self.transition_engine.request_pose_with_delta(&selected_action.target_pose, selected_action.state_effects.clone(), selected_action.target_anim.clone(), &self.app_handle).await {
             log::error!("Failed to request pose: {}", e);
             return;
         }

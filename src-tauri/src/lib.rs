@@ -85,57 +85,19 @@ pub fn run() {
             app.manage(transition_engine.clone());
 
             // Initialize Offline Utility AI Proactivity Ticker
-            let mut actions_pool = std::collections::HashMap::new();
+            let resource_behavior_dir = app.path().resource_dir().unwrap_or_default().join("public").join("behavior");
+            let utility_actions_path = resource_behavior_dir.join("utility_actions.json");
             
-            // Hardcode some test actions for Phase 4
-            let lay_down = core::behavior::utility_ai::action::UtilityAction {
-                id: "take_a_nap".into(),
-                target_pose: "Laying".into(),
-                animation_tags: vec!["idle".into()],
-                base_weight: 1.0,
-                considerations: vec![
-                    core::behavior::utility_ai::action::Consideration {
-                        state_field: "energy".into(),
-                        curve: core::behavior::utility_ai::scoring::ScoringCurve {
-                            curve_type: core::behavior::utility_ai::scoring::CurveType::InverseQuadratic,
-                            m: 1.0, k: 0.0, b: 0.0, c: 1.0,
-                        },
-                        weight: 1.0,
-                    }
-                ],
-                state_effects: core::state::CharacterStateDelta {
-                    energy: 20, mood: 1, affinity: 0, trust: 0,
-                    familiarity: 0, curiosity: 0, patience: 0, confidence: 0,
+            let actions_pool = match core::behavior::utility_ai::config_loader::load_utility_actions(&utility_actions_path) {
+                Ok(pool) => {
+                    log::info!("Loaded {} utility actions from config.", pool.len());
+                    pool
                 },
-                cooldown_seconds: 60,
-                can_interrupt: false,
+                Err(e) => {
+                    log::error!("Failed to load utility actions: {}. Falling back to empty pool.", e);
+                    std::collections::HashMap::new()
+                }
             };
-
-            let play_around = core::behavior::utility_ai::action::UtilityAction {
-                id: "play_around".into(),
-                target_pose: "Stand".into(),
-                animation_tags: vec!["dance".into()],
-                base_weight: 1.0,
-                considerations: vec![
-                    core::behavior::utility_ai::action::Consideration {
-                        state_field: "mood".into(),
-                        curve: core::behavior::utility_ai::scoring::ScoringCurve {
-                            curve_type: core::behavior::utility_ai::scoring::CurveType::InverseQuadratic,
-                            m: 1.0, k: 0.0, b: 0.0, c: 1.0,
-                        },
-                        weight: 1.0,
-                    }
-                ],
-                state_effects: core::state::CharacterStateDelta {
-                    energy: -5, mood: 5, affinity: 0, trust: 0,
-                    familiarity: 0, curiosity: 0, patience: 0, confidence: 0,
-                },
-                cooldown_seconds: 30,
-                can_interrupt: false,
-            };
-
-            actions_pool.insert("take_a_nap".into(), lay_down);
-            actions_pool.insert("play_around".into(), play_around);
 
             let proactivity_ticker = core::behavior::utility_ai::ticker::ProactivityTicker::new(
                 state_manager_arc.clone(),

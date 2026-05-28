@@ -1,38 +1,17 @@
+pub mod mood;
+pub mod energy;
+pub mod small_scale;
+pub mod large_scale;
+pub mod character_state;
+
+pub use mood::Mood;
+pub use energy::Energy;
+pub use small_scale::{Curiosity, Patience, Confidence, Loneliness};
+pub use large_scale::{Affinity, Trust, Familiarity};
+pub use character_state::CharacterState;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc, NaiveDate};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CharacterState {
-    pub character_id: String,
-    pub mood: i8,         // -10..10
-    pub energy: i8,       // 0..100 (using i8 to match delta easily or u8 and handle carefully, sticking to i8 for ease of delta addition if negative handling needed)
-    pub affinity: u8,     // 0..100
-    pub trust: u8,        // 0..100
-    pub familiarity: u8,  // 0..100
-    pub curiosity: u8,    // 0..100
-    pub patience: u8,     // 0..100
-    pub confidence: u8,   // 0..100
-    pub updated_at: DateTime<Utc>,
-    pub schema_version: u32,
-}
-
-impl Default for CharacterState {
-    fn default() -> Self {
-        Self {
-            character_id: String::new(),
-            mood: 0,
-            energy: 70,
-            affinity: 10,
-            trust: 20,
-            familiarity: 0,
-            curiosity: 50,
-            patience: 60,
-            confidence: 50,
-            updated_at: Utc::now(),
-            schema_version: 1,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

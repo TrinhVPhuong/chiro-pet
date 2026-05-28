@@ -1,0 +1,194 @@
+[
+  {
+    "id": "idle_stand",
+    "target_pose": "Stand",
+    "target_anim": "neutral_idle",
+    "animation_tags": [
+      "idle"
+    ],
+    "base_weight": 0.5,
+    "considerations": [],
+    "state_effects": {
+      "energy": 0,
+      "mood": 0,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 15,
+    "can_interrupt": false
+  },
+  {
+    "id": "stretch_and_jog",
+    "target_pose": "Stand",
+    "target_anim": "action_jog",
+    "animation_tags": [
+      "action"
+    ],
+    "base_weight": 0.8,
+    "considerations": [
+      {
+        "state_field": "energy",
+        "curve": {
+          "curve_type": "linear",
+          "m": 1.0,
+          "k": 0.0,
+          "b": 0.0,
+          "c": 1.0
+        },
+        "weight": 1.0
+      }
+    ],
+    "state_effects": {
+      "energy": -5,
+      "mood": 2,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 45,
+    "can_interrupt": false
+  },
+  {
+    "id": "dance_fun",
+    "target_pose": "Stand",
+    "target_anim": "dance_gangnam_style",
+    "animation_tags": [
+      "dance"
+    ],
+    "base_weight": 0.9,
+    "considerations": [
+      {
+        "state_field": "mood",
+        "curve": {
+          "curve_type": "linear",
+          "m": 1.0,
+          "k": 0.0,
+          "b": 0.0,
+          "c": 1.0
+        },
+        "weight": 1.0
+      }
+    ],
+    "state_effects": {
+      "energy": -10,
+      "mood": 5,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 60,
+    "can_interrupt": false
+  },
+  {
+    "id": "sit_relax",
+    "target_pose": "Sit",
+    "target_anim": "sit_idle",
+    "animation_tags": [
+      "idle"
+    ],
+    "base_weight": 0.7,
+    "considerations": [
+      {
+        "state_field": "energy",
+        "curve": {
+          "curve_type": "inverse_quadratic",
+          "m": 1.0,
+          "k": 0.0,
+          "b": 0.0,
+          "c": 1.0
+        },
+        "weight": 1.0
+      }
+    ],
+    "state_effects": {
+      "energy": 5,
+      "mood": 1,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 45,
+    "can_interrupt": false
+  },
+  {
+    "id": "kneel_think",
+    "target_pose": "Kneel",
+    "target_anim": "kneel_idle",
+    "animation_tags": [
+      "idle"
+    ],
+    "base_weight": 0.6,
+    "considerations": [
+      {
+        "state_field": "curiosity",
+        "curve": {
+          "curve_type": "linear",
+          "m": 1.0,
+          "k": 0.0,
+          "b": 0.0,
+          "c": 1.0
+        },
+        "weight": 1.0
+      }
+    ],
+    "state_effects": {
+      "energy": 0,
+      "mood": 0,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 90,
+    "can_interrupt": false
+  },
+  {
+    "id": "take_a_nap",
+    "target_pose": "Laying",
+    "target_anim": "laying_idle",
+    "animation_tags": [
+      "idle"
+    ],
+    "base_weight": 1.0,
+    "considerations": [
+      {
+        "state_field": "energy",
+        "curve": {
+          "curve_type": "inverse_quadratic",
+          "m": 1.0,
+          "k": 0.0,
+          "b": 0.0,
+          "c": 1.0
+        },
+        "weight": 1.0
+      }
+    ],
+    "state_effects": {
+      "energy": 20,
+      "mood": 1,
+      "affinity": 0,
+      "trust": 0,
+      "familiarity": 0,
+      "curiosity": 0,
+      "patience": 0,
+      "confidence": 0
+    },
+    "cooldown_seconds": 120,
+    "can_interrupt": false
+  }
+]

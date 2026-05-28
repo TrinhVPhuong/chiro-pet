@@ -67,14 +67,15 @@ impl StateManager {
 
                 let state = CharacterState {
                     character_id: character_id.clone(),
-                    mood: r.get::<i64, _>("mood") as i8,
-                    energy: r.get::<i64, _>("energy") as i8,
-                    affinity: r.get::<i64, _>("affinity") as u8,
-                    trust: r.get::<i64, _>("trust") as u8,
-                    familiarity: r.get::<i64, _>("familiarity") as u8,
-                    curiosity: r.get::<i64, _>("curiosity") as u8,
-                    patience: r.get::<i64, _>("patience") as u8,
-                    confidence: r.get::<i64, _>("confidence") as u8,
+                    mood: super::types::mood::Mood::new(r.get::<i64, _>("mood") as i8),
+                    energy: super::types::energy::Energy::new(r.get::<i64, _>("energy") as i8),
+                    affinity: super::types::large_scale::Affinity::new(r.get::<i64, _>("affinity") as u8),
+                    trust: super::types::large_scale::Trust::new(r.get::<i64, _>("trust") as u8),
+                    familiarity: super::types::large_scale::Familiarity::new(r.get::<i64, _>("familiarity") as u8),
+                    curiosity: super::types::small_scale::Curiosity::new(r.get::<i64, _>("curiosity") as u8),
+                    patience: super::types::small_scale::Patience::new(r.get::<i64, _>("patience") as u8),
+                    confidence: super::types::small_scale::Confidence::new(r.get::<i64, _>("confidence") as u8),
+                    loneliness: super::types::small_scale::Loneliness::default(),
                     updated_at,
                     schema_version: r.get::<i64, _>("schema_version") as u32,
                 };
@@ -131,14 +132,14 @@ impl StateManager {
         let mut states = self.character_states.write().await;
         let state = states.get_mut(character_id).ok_or_else(|| super::errors::StateError::CharacterNotFound(character_id.to_string()))?;
         
-        state.mood = (state.mood as i16 + guarded_delta.mood as i16).clamp(-10, 10) as i8;
-        state.energy = (state.energy as i16 + guarded_delta.energy as i16).clamp(0, 100) as i8;
-        state.affinity = (state.affinity as i16 + guarded_delta.affinity as i16).clamp(0, 100) as u8;
-        state.trust = (state.trust as i16 + guarded_delta.trust as i16).clamp(0, 100) as u8;
-        state.familiarity = (state.familiarity as i16 + guarded_delta.familiarity as i16).clamp(0, 100) as u8;
-        state.curiosity = (state.curiosity as i16 + guarded_delta.curiosity as i16).clamp(0, 100) as u8;
-        state.patience = (state.patience as i16 + guarded_delta.patience as i16).clamp(0, 100) as u8;
-        state.confidence = (state.confidence as i16 + guarded_delta.confidence as i16).clamp(0, 100) as u8;
+        state.mood = state.mood.apply_delta(guarded_delta.mood);
+        state.energy = state.energy.apply_delta(guarded_delta.energy);
+        state.affinity = state.affinity.apply_delta(guarded_delta.affinity as i16);
+        state.trust = state.trust.apply_delta(guarded_delta.trust as i16);
+        state.familiarity = state.familiarity.apply_delta(guarded_delta.familiarity as i16);
+        state.curiosity = state.curiosity.apply_delta(guarded_delta.curiosity as i16);
+        state.patience = state.patience.apply_delta(guarded_delta.patience as i16);
+        state.confidence = state.confidence.apply_delta(guarded_delta.confidence as i16);
         state.updated_at = Utc::now();
 
         let new_state = state.clone();
@@ -166,14 +167,14 @@ impl StateManager {
                 "#
             )
             .bind(&new_state.character_id)
-            .bind(new_state.mood)
-            .bind(new_state.energy)
-            .bind(new_state.affinity)
-            .bind(new_state.trust)
-            .bind(new_state.familiarity)
-            .bind(new_state.curiosity)
-            .bind(new_state.patience)
-            .bind(new_state.confidence)
+            .bind(new_state.mood.value())
+            .bind(new_state.energy.value())
+            .bind(new_state.affinity.value())
+            .bind(new_state.trust.value())
+            .bind(new_state.familiarity.value())
+            .bind(new_state.curiosity.value())
+            .bind(new_state.patience.value())
+            .bind(new_state.confidence.value())
             .bind(updated_at_str)
             .bind(new_state.schema_version)
             .execute(&db.pool)
@@ -212,12 +213,12 @@ mod tests {
 
         let result = manager.patch_character_state("chiro", delta, MutationSource::OfflineAI).await.unwrap();
         
-        // Initial defaults are: mood: 0, energy: 70
-        assert_eq!(result.new_state.mood, 2);
-        assert_eq!(result.new_state.energy, 60);
+        // Initial defaults are: mood: 0, energy: 0
+        assert_eq!(result.new_state.mood.value(), 2);
+        assert_eq!(result.new_state.energy.value(), -3); // clamped at MIN
 
         let current = manager.get_character_state("chiro").await.unwrap();
-        assert_eq!(current.mood, 2);
-        assert_eq!(current.energy, 60);
+        assert_eq!(current.mood.value(), 2);
+        assert_eq!(current.energy.value(), -3);
     }
 }

@@ -32,7 +32,7 @@ impl TransitionEngine {
         }
     }
 
-    pub async fn request_pose_with_delta(&self, target_pose: &str, delta: CharacterStateDelta, app: &AppHandle) -> Result<(), String> {
+    pub async fn request_pose_with_delta(&self, target_pose: &str, delta: CharacterStateDelta, target_anim: Option<String>, app: &AppHandle) -> Result<(), String> {
         let mut queue = self.action_queue.lock().await;
         let mut current = self.current_pose.lock().await;
 
@@ -41,6 +41,18 @@ impl TransitionEngine {
         drop(pending);
 
         if *current == target_pose {
+            // Already at target pose, just play the target animation if it exists
+            if let Some(anim) = target_anim {
+                let mut command = AnimationCommand::idle();
+                command.animation_id = Some(anim);
+                command.play_once = false;
+                command.loop_anim = true;
+                command.state = AnimationState::Idle;
+                command.priority = 20; // Slightly higher than base idle
+                command.interrupt_policy = "allow_higher".to_string();
+                let _ = self.director.play(app, command).await;
+            }
+            
             return Ok(());
         }
 
@@ -50,6 +62,10 @@ impl TransitionEngine {
                 queue.push_back(anim);
             }
             
+            if let Some(anim) = target_anim {
+                queue.push_back(anim); // Push target animation at the end
+            }
+
             // Set the new target pose immediately so consecutive calls don't recalculate from start
             *current = target_pose.to_string();
 
@@ -91,12 +107,25 @@ impl TransitionEngine {
         
         if let Some(next_anim) = queue.pop_front() {
             let mut command = AnimationCommand::idle(); // Use a base command
-            command.animation_id = Some(next_anim);
-            command.play_once = true;
-            command.loop_anim = false;
-            command.state = AnimationState::OneShotAction("transition".to_string());
-            command.priority = 80; // High priority for transitions
-            command.interrupt_policy = "higher_priority".to_string();
+            command.animation_id = Some(next_anim.clone());
+            
+            // If the queue is empty after popping, it means this might be the target_anim, not a transition
+            // A more robust check would be to see if next_anim is a transition animation from the graph, 
+            // but for now, we can check if it starts with "action_" or "dance_" etc.
+            // Let's assume if it's the last one and it's an idle/dance, it loops.
+            if queue.is_empty() && (!next_anim.starts_with("action_standup") && !next_anim.starts_with("action_crouch") && !next_anim.starts_with("action_laydown")) {
+                command.play_once = false;
+                command.loop_anim = true;
+                command.state = AnimationState::Idle; // Or deduce from name
+                command.priority = 20; 
+                command.interrupt_policy = "allow_higher".to_string();
+            } else {
+                command.play_once = true;
+                command.loop_anim = false;
+                command.state = AnimationState::OneShotAction("transition".to_string());
+                command.priority = 80; // High priority for transitions
+                command.interrupt_policy = "higher_priority".to_string();
+            }
             
             self.director.play(app, command).await?;
         } else {
@@ -140,7 +169,7 @@ mod tests {
         
         // This won't run cleanly without an app handle, but we can test the internal state pending_state_delta
         let mut pending = engine.pending_state_delta.lock().await;
-        *pending = Some(delta);
+        *pending = Some(delta.clone());
         drop(pending);
         
         let pending = engine.pending_state_delta.lock().await;

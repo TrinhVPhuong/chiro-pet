@@ -13,14 +13,14 @@ impl Consideration {
     pub fn evaluate(&self, state: &CharacterState) -> f32 {
         // Normalize state values to [0.0, 1.0] for the curve evaluation
         let raw_value = match self.state_field.as_str() {
-            "energy" => state.energy as f32 / 100.0,
-            "mood" => (state.mood as f32 + 10.0) / 20.0, // -10..10 normalized to 0..1
-            "curiosity" => state.curiosity as f32 / 100.0,
-            "affinity" => state.affinity as f32 / 100.0,
-            "trust" => state.trust as f32 / 100.0,
-            "familiarity" => state.familiarity as f32 / 100.0,
-            "patience" => state.patience as f32 / 100.0,
-            "confidence" => state.confidence as f32 / 100.0,
+            "energy" => state.energy.normalized(),
+            "mood" => state.mood.normalized(),
+            "curiosity" => state.curiosity.normalized(),
+            "affinity" => state.affinity.normalized(),
+            "trust" => state.trust.normalized(),
+            "familiarity" => state.familiarity.normalized(),
+            "patience" => state.patience.normalized(),
+            "confidence" => state.confidence.normalized(),
             _ => 0.5, // Default mid-value for unknown fields
         };
 
@@ -33,6 +33,7 @@ impl Consideration {
 pub struct UtilityAction {
     pub id: String, // e.g., "take_a_nap"
     pub target_pose: String, // e.g., "Laying"
+    pub target_anim: Option<String>, // the animation to play after reaching the target pose
     pub animation_tags: Vec<String>, // e.g., ["idle", "sleep"]
     pub base_weight: f32, // Multiplier for the final score
     pub considerations: Vec<Consideration>,

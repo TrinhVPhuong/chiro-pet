@@ -197,6 +197,44 @@ export class AnimationController {
         } else {
             const clip = await this.loadClip(filesToLoad[0]);
             if (clip) {
+                // If it's a loop and state is Idle, make it the new base action
+                if (command.loop_anim && command.state === 'Idle') {
+                    const newAction = this.mixer.clipAction(clip);
+                    newAction.setLoop(THREE.LoopOnce, 1);
+                    newAction.clampWhenFinished = true;
+                    newAction.reset();
+                    newAction.setEffectiveWeight(1.0);
+
+                    if (this.currentAction) {
+                        newAction.crossFadeFrom(this.currentAction, command.crossfade_ms / 1000, false);
+                    } else if (this.baseAction && this.baseAction.isRunning()) {
+                        newAction.crossFadeFrom(this.baseAction, command.crossfade_ms / 1000, false);
+                    }
+
+                    newAction.play();
+                    
+                    // Stop the old base action later
+                    if (this.baseAction && this.baseAction !== newAction) {
+                         const oldBase = this.baseAction;
+                         setTimeout(() => {
+                            if (oldBase && !oldBase.isRunning()) {
+                                this.mixer.uncacheAction(oldBase.getClip());
+                            }
+                         }, command.crossfade_ms + 100);
+                    }
+                    
+                    this.baseAction = newAction;
+                    
+                    const onFinished = (e: any) => {
+                        if (e.action === newAction) {
+                            this.mixer.removeEventListener('finished', onFinished);
+                            this.playBaseAnimation(entry);
+                        }
+                    };
+                    this.mixer.addEventListener('finished', onFinished);
+                    return; // Done
+                }
+
                 if (command.section && entry.sections) {
                     // Handle sectioned playback
                     this.sectionedPlayback.play(
@@ -408,11 +446,16 @@ export class AnimationController {
         this.mixer.addEventListener('finished', onFinished);
     }
 
-    private returnToBase(crossfadeSec: number) {
+    private async returnToBase(crossfadeSec: number) {
+        // If a command to set a new loop has been processed, its loop action would be currentAction.
+        // However, the intention of returnToBase is to go back to the default idle state (baseAction).
+        // Since we want to update the baseAction when an idle loop is received from Utility AI,
+        // we handle that logic in handleCommand, but we also ensure returnToBase doesn't overwrite a newly set idle.
+        
         if (this.baseAction) {
             this.baseAction.reset();
             this.baseAction.setEffectiveWeight(1.0);
-            if (this.currentAction) {
+            if (this.currentAction && this.currentAction !== this.baseAction) {
                 this.baseAction.crossFadeFrom(this.currentAction, crossfadeSec, false);
             }
             this.baseAction.play();
